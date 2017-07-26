@@ -366,8 +366,8 @@ describe('TypedProps', function() {
         });
     });
 
-    describe('Extension', function() {
-        it('Should be extensible', function() {
+    describe('Inheritance', function() {
+        it('Should inherits all methods and props', function() {
             class MyTypedProps extends TypedProps {}
 
             MyTypedProps.addChecker('equals', function(value, needle) {
@@ -378,7 +378,7 @@ describe('TypedProps', function() {
                 return value === needle;
             });
 
-            const result = TypedProps.check(5, MyTypedProps.equals(5));
+            const result = MyTypedProps.check(5, MyTypedProps.number.equals(5));
 
             should(result).has.lengthOf(0);
         });

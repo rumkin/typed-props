@@ -8,6 +8,7 @@
 ### v0.5
 
 - [ ] Create TypedProp from array of prop names and it's values.
+- [ ] Clone rules.
 
 ### v0.4
 

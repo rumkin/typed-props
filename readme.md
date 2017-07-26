@@ -70,9 +70,19 @@ const report = TypedProps.check({}, shape); // => [{path:['anything'], rule: 'is
 
 ### Own checkers
 
-TypedProps is extensible with custom properties if needed.
+TypedProps could be extended or inherited.
 
 ```javascript
+// Extend TypedProps with custom checker.
+TypedProps.addChecker('infinity', function(value) {
+    if (value === undefined) { // Skip empty values
+        return;
+    }
+
+    return value === Infinity;
+});
+
+// Inherit TypedProps in new class
 class MyTypedProps extends TypedProps {}
 
 MyTypedProps.addChecker('equals', function(value, needle) {
@@ -83,9 +93,9 @@ MyTypedProps.addChecker('equals', function(value, needle) {
     return value === needle;
 });
 
-TypedProps.check(5, MyTypedProps.equals(5)); // -> []
-// or
 MyTypedProps.check(5, MyTypedProps.equals(5)); // -> []
+// or
+TypedProps.check(5, MyTypedProps.equals(5)); // -> []
 ```
 
 # License
