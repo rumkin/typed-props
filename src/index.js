@@ -223,7 +223,7 @@ TypedProps.addChecker('objectOf', function(value, type) {
         return false;
     }
 
-    const report = Object.entries(value)
+    const report = entries(value)
     .reduce((report, [prop, propValue]) => {
         return [
             ...report,
@@ -254,7 +254,7 @@ TypedProps.addChecker('shape', function(value, shape) {
         return false;
     }
 
-    const report = Object.entries(shape)
+    const report = entries(shape)
     .reduce((report, [prop, type]) => {
         return [
             ...report,
@@ -276,5 +276,12 @@ TypedProps.addChecker('shape', function(value, shape) {
     return true;
 });
 
+function entries(object) {
+    return Object.keys(object)
+    .reduce((result, key) => [
+        ...result,
+        [key, object[key]]
+    ], []);
+}
 
 module.exports = TypedProps;
