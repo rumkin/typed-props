@@ -1,0 +1,51 @@
+{
+  "name": "typed-props",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "npm run build:dev && npm run build:prod",
+    "build:dev": "webpack",
+    "build:prod": "NODE_ENV=production webpack",
+    "test": "mocha test/**.spec.js"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "mocha": "^3.4.1",
+    "should": "^11.2.1",
+    "webpack": "^2.5.1"
+  },
+  "version": "3.5.2",
+  "description": "Standalone and enhanced implementation of Facebook's PropTypes for browser and server",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "should": "^11.2.1",
+    "webpack": "^2.5.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rumkin/typed-props.git"
+  },
+  "keywords": [
+    "saga",
+    "sagas",
+    "async-effects",
+    "async",
+    "generators",
+    "flow",
+    "control"
+  ],
+  "author": "rumkin",
+  "bugs": {
+    "url": "https://github.com/rumkin/typed-props/issues"
+  },
+  "homepage": "https://github.com/rumkin/typed-props#readme"
+}
