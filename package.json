@@ -34,6 +34,9 @@
     "type": "git",
     "url": "git+https://github.com/rumkin/typed-props.git"
   },
+  "engines": {
+    "node": ">=0.6.0"
+  },
   "keywords": [
     "saga",
     "sagas",
