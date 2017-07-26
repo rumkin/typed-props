@@ -1,5 +1,7 @@
 # TypedProps
 
+![Build](https://img.shields.io/travis/rumkin/typed-props.svg)
+
 TypedProps is implementation of Facebook's PropTypes interface but extensible,
 reusable and customizable. It produce error reports as array of objects
 instead of throwing or printing into console. And it works *without* React.

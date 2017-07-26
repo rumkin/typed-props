@@ -17,8 +17,8 @@
     "should": "^11.2.1",
     "webpack": "^2.5.1"
   },
-  "version": "3.5.2",
-  "description": "Standalone and enhanced implementation of Facebook's PropTypes for browser and server",
+  "version": "0.3.6",
+  "description": "Facebook's PropTypes standalone extensible implementation for browser and server",
   "directories": {
     "test": "test"
   },
