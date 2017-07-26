@@ -259,13 +259,11 @@ TypedProps.addChecker('shape', function(value, shape) {
         return [
             ...report,
             ...this.constructor.check(value[prop], type)
-            .map((issue) => {
-                return {
-                    path: [prop, ...issue.path],
-                    rule: issue.rule,
-                    details: issue.details,
-                };
-            }),
+            .map((issue) => ({
+                path: [prop, ...issue.path],
+                rule: issue.rule,
+                details: issue.details,
+            })),
         ];
     }, []);
 
