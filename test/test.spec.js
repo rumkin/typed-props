@@ -4,6 +4,22 @@ const should = require('should');
 const TypedProps = require('..');
 
 describe('TypedProps', function() {
+    describe('Interface', function() {
+        it('should be immutable with primitives', function() {
+            const type1 = TypedProps.number;
+            const type2 = type1.isRequired;
+
+            should(type1).not.equal(type2);
+        });
+
+        it('should be immutable with shapes', function() {
+            const shape1 = TypedProps.shape({
+                name: TypedProps.string.isRequired,
+            });
+            const shape2 = shape1.isRequired;
+            should(shape1).not.equal(shape2);
+        });
+    });
     describe('Built-in checkers', function() {
         describe('isRequired', function() {
             it('Should pass not undefined', function() {
@@ -16,7 +32,7 @@ describe('TypedProps', function() {
                 should(report).has.lengthOf(0);
             });
 
-            it('Should not pass notundefined', function() {
+            it('Should not pass not undefined', function() {
                 const value = undefined;
 
                 const type = TypedProps.isRequired;
@@ -39,7 +55,7 @@ describe('TypedProps', function() {
                 should(report).has.lengthOf(0);
             });
 
-            it('Should not pass not number', function() {
+            it('Should not pass not a number', function() {
                 const value = null;
 
                 const type = TypedProps.number;

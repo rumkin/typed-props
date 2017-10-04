@@ -59,8 +59,9 @@ function addCheckerMethod(cls, name, checkerFunc) {
     };
 
     const instanceMethod = function(...args) {
-        this._checks = [...this._checks, {name, checkerFunc, args}];
-        return this;
+        const clone = new this.constructor();
+        clone._checks = [...this._checks, {name, checkerFunc, args}];
+        return clone;
     };
 
     cls[name] = staticMethod;
@@ -76,8 +77,9 @@ function addCheckerProperty(cls, name, checkerFunc) {
 
     Object.defineProperty(cls.prototype, name, {
         get() {
-            this._checks = [...this._checks, {name, checkerFunc, args: []}];
-            return this;
+            const clone = new this.constructor();
+            clone._checks = [...this._checks, {name, checkerFunc, args:[]}];
+            return clone;
         }
     });
 }
