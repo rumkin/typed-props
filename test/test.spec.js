@@ -386,7 +386,7 @@ describe('TypedProps', function() {
         it('Should inherits all methods and props', function() {
             class MyTypedProps extends TypedProps {}
 
-            MyTypedProps.addChecker('equals', function(value, needle) {
+            MyTypedProps.addMethod('equals', function(value, needle) {
                 if (value === undefined) {
                     return;
                 }

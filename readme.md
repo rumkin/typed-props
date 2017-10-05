@@ -68,13 +68,16 @@ const shape = TypedProps.shape({
 const report = TypedProps.check({}, shape); // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
 ```
 
+Result of `check` call is array of issues. If there is no issue array will be
+empty. Each issue is has interface of [validation-report](https://npmjs.com/package/validation-report).
+
 ### Own checkers
 
 TypedProps could be extended or inherited.
 
 ```javascript
 // Extend TypedProps with custom checker.
-TypedProps.addChecker('infinity', function(value) {
+TypedProps.addProperty('infinity', function(value) {
     if (value === undefined) { // Skip empty values
         return;
     }
@@ -85,7 +88,7 @@ TypedProps.addChecker('infinity', function(value) {
 // Inherit TypedProps in new class
 class MyTypedProps extends TypedProps {}
 
-MyTypedProps.addChecker('equals', function(value, needle) {
+MyTypedProps.addMethod('equals', function(value, needle) {
     if (value === undefined) {
         return;
     }
@@ -94,7 +97,6 @@ MyTypedProps.addChecker('equals', function(value, needle) {
 });
 
 MyTypedProps.check(5, MyTypedProps.equals(5)); // -> []
-// or
 TypedProps.check(5, MyTypedProps.equals(5)); // -> []
 ```
 

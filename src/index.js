@@ -5,21 +5,20 @@ class PureProps {
         this._checks = [];
     }
 
-    static addChecker(name, checkerFunc) {
-        if (typeof checkerFunc !== 'function') {
-            throw new Error('Argument #2 should be a function');
-        }
-
+    static addMethod(name, checker) {
         if (this.hasOwnProperty(name)) {
-            throw new Error(`Checker "${name}" already exists`);
+            throw new Error(`Checker "${name}" exists`);
         }
 
-        if (checkerFunc.length > 1) {
-            addCheckerMethod(this, name, checkerFunc);
+        addCheckerMethod(this, name, checker);
+    }
+
+    static addProperty(name, checker) {
+        if (this.hasOwnProperty(name)) {
+            throw new Error(`Checker "${name}" exists`);
         }
-        else {
-            addCheckerProperty(this, name, checkerFunc);
-        }
+
+        addCheckerProperty(this, name, checker);
     }
 
     static check(value, typedProps) {
@@ -54,6 +53,10 @@ class PureProps {
 class TypedProps extends PureProps {}
 
 function addCheckerMethod(cls, name, checkerFunc) {
+    if (typeof checkerFunc !== 'function') {
+        throw new Error('checkerFunc should be a function');
+    }
+
     const staticMethod = function(...args) {
         return (new this())[name](...args);
     };
@@ -69,6 +72,10 @@ function addCheckerMethod(cls, name, checkerFunc) {
 }
 
 function addCheckerProperty(cls, name, checkerFunc) {
+    if (typeof checkerFunc !== 'function') {
+        throw new Error('checkerFunc should be a function');
+    }
+
     Object.defineProperty(cls, name, {
         get() {
             return (new this())[name];
@@ -84,79 +91,29 @@ function addCheckerProperty(cls, name, checkerFunc) {
     });
 }
 
-TypedProps.addChecker('isRequired', function(value) {
+TypedProps.addProperty('number', skipUndef(typeOf('number')));
+
+TypedProps.addProperty('string', skipUndef(typeOf('string')));
+
+TypedProps.addProperty('bool', skipUndef(typeOf('boolean')));
+
+TypedProps.addProperty('func', skipUndef(typeOf('function')));
+
+TypedProps.addProperty('symbol', skipUndef(typeOf('symbol')));
+
+TypedProps.addProperty('object', skipUndef(isObject));
+
+TypedProps.addProperty('array', skipUndef(Array.isArray));
+
+TypedProps.addProperty('isRequired', function(value) {
     return typeof value !== 'undefined';
 });
 
-TypedProps.addChecker('number', function(value) {
-    if (typeof value === 'undefined') {
-        return;
-    }
+TypedProps.addMethod('instanceOf', skipUndef(function(value, cls) {
+    return isObject(value) && value instanceof cls;
+}));
 
-    return typeof value === 'number';
-});
-
-TypedProps.addChecker('string', function(value) {
-    if (typeof value === 'undefined') {
-        return;
-    }
-
-    return typeof value === 'string';
-});
-
-TypedProps.addChecker('bool', function(value) {
-    if (typeof value === 'undefined') {
-        return;
-    }
-
-    return typeof value === 'boolean';
-});
-
-TypedProps.addChecker('object', function(value) {
-    if (typeof value === 'undefined') {
-        return;
-    }
-
-    return value !== null && typeof value === 'object';
-});
-
-TypedProps.addChecker('array', function(value) {
-    if (typeof value === 'undefined') {
-        return;
-    }
-
-    return Array.isArray(value);
-});
-
-TypedProps.addChecker('func', function(value) {
-    if (typeof value === 'undefined') {
-        return;
-    }
-
-    return typeof value === 'function';
-});
-
-TypedProps.addChecker('symbol', function(value) {
-    if (typeof value === 'undefined') {
-        return;
-    }
-
-    return typeof value === 'symbol';
-});
-
-TypedProps.addChecker('instanceOf', function(value, cls) {
-    if (typeof value === 'undefined') {
-        return;
-    }
-
-    return value !== null && typeof value === 'object' && value instanceof cls;
-});
-
-TypedProps.addChecker('oneOf', function(value, values) {
-    if (typeof value === 'undefined') {
-        return true;
-    }
-
+TypedProps.addMethod('oneOf', skipUndef(function(value, values) {
     if (! values.includes(value)) {
         return {
             path: [],
@@ -169,13 +126,9 @@ TypedProps.addChecker('oneOf', function(value, values) {
     }
 
     return true;
-});
+}));
 
-TypedProps.addChecker('oneOfType', function(value, types) {
-    if (typeof value === 'undefined') {
-        return true;
-    }
-
+TypedProps.addMethod('oneOfType', skipUndef(function(value, types) {
     for (const type of types) {
         const result = this.constructor.check(value, type);
         if (! result.length) {
@@ -184,13 +137,9 @@ TypedProps.addChecker('oneOfType', function(value, types) {
     }
 
     return false;
-});
+}));
 
-TypedProps.addChecker('arrayOf', function(value, type) {
-    if (typeof value === 'undefined') {
-        return true;
-    }
-
+TypedProps.addMethod('arrayOf', skipUndef(function(value, type) {
     if (! Array.isArray(value)) {
         return false;
     }
@@ -214,14 +163,10 @@ TypedProps.addChecker('arrayOf', function(value, type) {
     }
 
     return true;
-});
+}));
 
-TypedProps.addChecker('objectOf', function(value, type) {
-    if (typeof value === 'undefined') {
-        return true;
-    }
-
-    if (value === null || typeof value !== 'object') {
+TypedProps.addMethod('objectOf', skipUndef(function(value, type) {
+    if (! isObject(value)) {
         return false;
     }
 
@@ -245,14 +190,10 @@ TypedProps.addChecker('objectOf', function(value, type) {
     }
 
     return true;
-});
+}));
 
-TypedProps.addChecker('shape', function(value, shape) {
-    if (typeof value === 'undefined') {
-        return true;
-    }
-
-    if (value === null || typeof value !== 'object') {
+TypedProps.addMethod('shape', skipUndef(function(value, shape) {
+    if (! isObject(value)) {
         return false;
     }
 
@@ -274,7 +215,24 @@ TypedProps.addChecker('shape', function(value, shape) {
     }
 
     return true;
-});
+}));
+
+function skipUndef(fn) {
+    return function (value, ...args) {
+        if (value === undefined) {
+            return;
+        }
+        else {
+            return fn.call(this, value, ...args);
+        }
+    };
+}
+
+function typeOf(type) {
+    return function(value) {
+        return typeof value === type;
+    };
+}
 
 function entries(object) {
     return Object.keys(object)
@@ -282,6 +240,10 @@ function entries(object) {
         ...result,
         [key, object[key]]
     ], []);
+}
+
+function isObject(value) {
+    return value !== null && typeof value === 'object';
 }
 
 module.exports = TypedProps;
