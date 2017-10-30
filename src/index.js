@@ -5,6 +5,10 @@ class PureProps {
         this._checks = [];
     }
 
+    static getChecks(type) {
+        return type._checks.slice();
+    }
+
     static addMethod(name, checker) {
         if (this.hasOwnProperty(name)) {
             throw new Error(`Checker "${name}" exists`);
@@ -22,8 +26,8 @@ class PureProps {
     }
 
     static check(value, typedProps) {
-        for (const {name, checkerFunc, args} of typedProps._checks) {
-            const reports = checkerFunc.call(typedProps, value, ...args);
+        for (const {name, checkFn, args} of typedProps._checks) {
+            const reports = checkFn.call(typedProps, value, ...args);
 
             if (reports === true || reports === undefined) {
                 continue;
@@ -52,9 +56,9 @@ class PureProps {
 
 class TypedProps extends PureProps {}
 
-function addCheckerMethod(cls, name, checkerFunc) {
-    if (typeof checkerFunc !== 'function') {
-        throw new Error('checkerFunc should be a function');
+function addCheckerMethod(cls, name, checkFn) {
+    if (typeof checkFn !== 'function') {
+        throw new Error('checkFn should be a function');
     }
 
     const staticMethod = function(...args) {
@@ -63,7 +67,7 @@ function addCheckerMethod(cls, name, checkerFunc) {
 
     const instanceMethod = function(...args) {
         const clone = new this.constructor();
-        clone._checks = [...this._checks, {name, checkerFunc, args}];
+        clone._checks = [...this._checks, {name, checkFn, args}];
         return clone;
     };
 
@@ -71,9 +75,9 @@ function addCheckerMethod(cls, name, checkerFunc) {
     cls.prototype[name] = instanceMethod;
 }
 
-function addCheckerProperty(cls, name, checkerFunc) {
-    if (typeof checkerFunc !== 'function') {
-        throw new Error('checkerFunc should be a function');
+function addCheckerProperty(cls, name, checkFn) {
+    if (typeof checkFn !== 'function') {
+        throw new Error('checkFn should be a function');
     }
 
     Object.defineProperty(cls, name, {
@@ -85,7 +89,7 @@ function addCheckerProperty(cls, name, checkerFunc) {
     Object.defineProperty(cls.prototype, name, {
         get() {
             const clone = new this.constructor();
-            clone._checks = [...this._checks, {name, checkerFunc, args:[]}];
+            clone._checks = [...this._checks, {name, checkFn, args:[]}];
             return clone;
         }
     });

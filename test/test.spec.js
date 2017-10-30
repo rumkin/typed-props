@@ -19,6 +19,14 @@ describe('TypedProps', function() {
             const shape2 = shape1.isRequired;
             should(shape1).not.equal(shape2);
         });
+
+        it('should return checks', function() {
+            const type = TypedProps.string.isRequired;
+            const checks = TypedProps.getChecks(type);
+
+            should(type._checks).not.equal(checks);
+            should(type._checks).deepEqual(checks);
+        });
     });
     describe('Built-in checkers', function() {
         describe('isRequired', function() {

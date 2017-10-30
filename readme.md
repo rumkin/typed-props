@@ -71,9 +71,9 @@ const report = TypedProps.check({}, shape); // => [{path:['anything'], rule: 'is
 Result of `check` call is array of issues. If there is no issue array will be
 empty. Each issue is has interface of [validation-report](https://npmjs.com/package/validation-report).
 
-### Own checkers
+### Custom checkers
 
-TypedProps could be extended or inherited.
+TypedProps could be inherited or extended with new rules.
 
 ```javascript
 // Extend TypedProps with custom checker.
@@ -96,8 +96,12 @@ MyTypedProps.addMethod('equals', function(value, needle) {
     return value === needle;
 });
 
-MyTypedProps.check(5, MyTypedProps.equals(5)); // -> []
+// Any TypedProps' ancestor should be validated by TypedProps
 TypedProps.check(5, MyTypedProps.equals(5)); // -> []
+MyTypedProps.check(5, MyTypedProps.equals(5)); // -> []
+
+// MyTypedProps uses TypedProps' checker`infinity`
+TypedProps.check(Infinity, MyTypedProps.infinity); // -> []
 ```
 
 # License
