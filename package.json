@@ -1,6 +1,6 @@
 {
   "name": "typed-props",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Facebook's PropTypes standalone extensible implementation for browser and server",
   "main": "src/index.js",
   "scripts": {
@@ -32,13 +32,13 @@
     "node": ">=0.6.0"
   },
   "keywords": [
-    "saga",
-    "sagas",
-    "async-effects",
-    "async",
-    "generators",
-    "flow",
-    "control"
+    "validator",
+    "validation",
+    "types",
+    "type-check",
+    "typed",
+    "values",
+    "prop-types"
   ],
   "author": "rumkin",
   "bugs": {
