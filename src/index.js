@@ -9,12 +9,12 @@ class PureProps {
         return type._checks.slice();
     }
 
-    static addMethod(name, checker) {
+    static addMethod(name, ...args) {
         if (this.hasOwnProperty(name)) {
             throw new Error(`Checker "${name}" exists`);
         }
 
-        addCheckerMethod(this, name, checker);
+        addCheckerMethod(this, name, ...args);
     }
 
     static addProperty(name, checker) {
@@ -26,8 +26,8 @@ class PureProps {
     }
 
     static check(value, typedProps) {
-        for (const {name, checkFn, args} of typedProps._checks) {
-            const reports = checkFn.call(typedProps, value, ...args);
+        for (const {name, check, args} of typedProps._checks) {
+            const reports = check.call(typedProps, value, ...args);
 
             if (reports === true || reports === undefined) {
                 continue;
@@ -54,11 +54,20 @@ class PureProps {
     }
 }
 
-class TypedProps extends PureProps {}
+function addCheckerMethod(cls, name, ...args) {
+    let check;
+    let transform;
+    if (args.length > 1) {
+        transform = args[0];
+        check = args[1];
+    }
+    else {
+        transform = null;
+        check = args[0];
+    }
 
-function addCheckerMethod(cls, name, checkFn) {
-    if (typeof checkFn !== 'function') {
-        throw new Error('checkFn should be a function');
+    if (typeof check !== 'function') {
+        throw new Error('Argument `check` should be a function');
     }
 
     const staticMethod = function(...args) {
@@ -67,7 +76,15 @@ function addCheckerMethod(cls, name, checkFn) {
 
     const instanceMethod = function(...args) {
         const clone = new this.constructor();
-        clone._checks = [...this._checks, {name, checkFn, args}];
+
+        if (transform) {
+            args = [transform(...args)];
+        }
+
+        clone._checks = [
+            ...this._checks,
+            {name, check, args},
+        ];
         return clone;
     };
 
@@ -75,9 +92,9 @@ function addCheckerMethod(cls, name, checkFn) {
     cls.prototype[name] = instanceMethod;
 }
 
-function addCheckerProperty(cls, name, checkFn) {
-    if (typeof checkFn !== 'function') {
-        throw new Error('checkFn should be a function');
+function addCheckerProperty(cls, name, check) {
+    if (typeof check !== 'function') {
+        throw new Error('check should be a function');
     }
 
     Object.defineProperty(cls, name, {
@@ -89,11 +106,18 @@ function addCheckerProperty(cls, name, checkFn) {
     Object.defineProperty(cls.prototype, name, {
         get() {
             const clone = new this.constructor();
-            clone._checks = [...this._checks, {name, checkFn, args:[]}];
+            clone._checks = [
+                ...this._checks,
+                {name, check, args:[]}
+            ];
             return clone;
         }
     });
 }
+
+// TypedProps implementation
+
+class TypedProps extends PureProps {}
 
 TypedProps.addProperty('number', skipUndef(typeOf('number')));
 
@@ -248,6 +272,10 @@ function entries(object) {
 
 function isObject(value) {
     return value !== null && typeof value === 'object';
+}
+
+function returnArgs(...args) {
+    return args;
 }
 
 module.exports = TypedProps;

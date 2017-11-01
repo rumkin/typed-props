@@ -27,6 +27,24 @@ describe('TypedProps', function() {
             should(type._checks).not.equal(checks);
             should(type._checks).deepEqual(checks);
         });
+
+        it('should add args transformer', function() {
+            class CustomTypes extends TypedProps {};
+
+            CustomTypes.addMethod('equal', function(val) {
+                return {val};
+            }, function(value, {val}) {
+                return value === val;
+            });
+
+            const type = CustomTypes.equal(1);
+            const checks = CustomTypes.getChecks(type);
+
+            should(checks[0].args[0]).be.deepEqual({val: 1});
+            should.doesNotThrow(() => CustomTypes.check(1, type));
+
+            should(CustomTypes.check(2, type)).has.lengthOf(1);
+        });
     });
     describe('Built-in checkers', function() {
         describe('isRequired', function() {
