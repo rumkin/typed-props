@@ -5,8 +5,21 @@ class PureProps {
         this._checks = [];
     }
 
+    // Get all `type` checks
     static getChecks(type) {
         return type._checks.slice();
+    }
+
+    // Get check from `type` by `name`
+    static getCheck(type, name) {
+      const result = type._checks.find((item) => item.name === name);
+
+      if (result) {
+        return result.args;
+      }
+      else {
+        return null;
+      }
     }
 
     static addMethod(name, ...args) {

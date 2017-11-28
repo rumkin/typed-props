@@ -45,6 +45,22 @@ describe('TypedProps', function() {
 
             should(CustomTypes.check(2, type)).has.lengthOf(1);
         });
+
+        describe('getCheck()', function() {
+            it('Should return check by name if it exists', function() {
+                const type = TypedProps.string.isRequired;
+                const check = TypedProps.getCheck(type, 'isRequired');
+
+                should(check).be.instanceOf(Array);
+            });
+
+            it('Should return null for check wich not exists', function() {
+                const type = TypedProps.string.isRequired;
+                const check = TypedProps.getCheck(type, 'X');
+
+                should(check).be.equal(null);
+            });
+        });
     });
     describe('Built-in checkers', function() {
         describe('isRequired', function() {

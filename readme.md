@@ -104,6 +104,14 @@ MyTypedProps.check(5, MyTypedProps.equals(5)); // -> []
 TypedProps.check(Infinity, MyTypedProps.infinity); // -> []
 ```
 
-# License
+### API
+
+#### TypedProps.getCheck
+
+* _type_ `TypedProps`. Target type.
+* _name_ `string`. Checker name.
+* `*[]|null`. Returns array of checker settings or null if checker is not found. 
+
+### License
 
 MIT.
