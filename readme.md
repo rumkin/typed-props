@@ -2,7 +2,7 @@
 
 ![Build](https://img.shields.io/travis/rumkin/typed-props.svg)
 
-TypedProps is implementation of Facebook's PropTypes interface but extensible,
+TypedProps is an implementation of Facebook's PropTypes interface but extensible,
 reusable and customizable. It produce error reports as array of objects
 instead of throwing or printing into console. And it works *without* React.
 
@@ -104,13 +104,17 @@ MyTypedProps.check(5, MyTypedProps.equals(5)); // -> []
 TypedProps.check(Infinity, MyTypedProps.infinity); // -> []
 ```
 
-### API
+## API
 
-#### TypedProps.getCheck
+### TypedProps.getCheck
 
-* _type_ `TypedProps`. Target type.
-* _name_ `string`. Checker name.
-* `*[]|null`. Returns array of checker settings or null if checker is not found. 
+```
+(type:TypedProps, name:string) -> null|*[]
+```
+
+* `type`. Target type.
+* `name`. Checker name.
+* `=`. Returns array of checker arguments or null if checker is not found.
 
 ### License
 
