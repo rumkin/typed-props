@@ -1,10 +1,13 @@
 # TypedProps
 
-![Build](https://img.shields.io/travis/rumkin/typed-props.svg)
+[![npm](https://img.shields.io/npm/v/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
+[![Travis](https://img.shields.io/travis/rumkin/typed-props.svg?style=flat-square)](https://travis-ci.org/rumkin/typed-props)
+![](https://img.shields.io/badge/size-6.32%20KiB-blue.svg?style=flat-square)
+[![npm](https://img.shields.io/npm/dm/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
 
-TypedProps is an implementation of Facebook's PropTypes interface but extensible,
-reusable and customizable. It produce error reports as array of objects
-instead of throwing or printing into console. And it works *without* React.
+Facebook's PropTypes interface implementation for client and server, reusable
+and extensible. It produce error reports as array of objects instead of throwing
+or printing into console. And it works *without* React.
 
 ## Installation
 
@@ -20,9 +23,10 @@ Or via unpkg.com:
 <script src="https://unpkg.com/typed-props@0/dist/typed-props.min.js"></script>
 ```
 
-## Example
+## Usage
 
-Define effects:
+Complete TypedProps rules example:
+
 ```javascript
 import Type from 'typed-props';
 
@@ -68,16 +72,16 @@ const shape = Type.shape({
 const report = Type.check({}, shape); // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
 ```
 
-Result of `check` call is array of issues. If there is no issue array will be
-empty. Each issue is has interface of [validation-report](https://npmjs.com/package/validation-report).
+Result of `check` call is array of issues. If there is no issues, this array will be
+empty. Each item has interface of [validation-report](https://npmjs.com/package/validation-report)'s Issue.
 
 ### Custom checkers
 
 TypedProps could be inherited or extended with new rules.
 
 ```javascript
-// Extend TypedProps with custom checker.
-TypedProps.addProperty('infinity', function(value) {
+// Extend Type with custom checker.
+Type.addProperty('infinity', (value) => {
     if (value === undefined) { // Skip empty values
         return;
     }
@@ -85,10 +89,10 @@ TypedProps.addProperty('infinity', function(value) {
     return value === Infinity;
 });
 
-// Inherit TypedProps in new class
-class MyTypedProps extends TypedProps {}
+// Inherit Type in new class
+class MyType extends Type {}
 
-MyTypedProps.addMethod('equals', function(value, needle) {
+MyType.addMethod('equals', (value, needle) => {
     if (value === undefined) {
         return;
     }
@@ -96,26 +100,109 @@ MyTypedProps.addMethod('equals', function(value, needle) {
     return value === needle;
 });
 
-// Any TypedProps' ancestor should be validated by TypedProps
-TypedProps.check(5, MyTypedProps.equals(5)); // -> []
-MyTypedProps.check(5, MyTypedProps.equals(5)); // -> []
+// Any Type' ancestor should be validated by Type
+Type.check(5, MyType.equals(5)); // -> []
+MyType.check(5, MyType.equals(5)); // -> []
 
-// MyTypedProps uses TypedProps' checker`infinity`
-TypedProps.check(Infinity, MyTypedProps.infinity); // -> []
+// MyType uses Type's checker `infinity`
+Type.check(Infinity, MyType.infinity); // -> []
 ```
 
 ## API
 
-### TypedProps.getCheck
-
+### static TypedProps.check()
+```text
+(value:*, type:TypedProps) -> Array.<Issue>
 ```
+
+Validate `value` to satisfy `type` requirements. Always produce an Array.
+
+### static TypedProps.addMethod()
+```text
+(name:String, [transform:TransformFunc,] checker:CheckerFunc) -> void
+```
+
+* `name` - New TypedProps property name.
+* `transform` - Function that transform params before they got into checker. It works once when type is configuring.
+* `checker` - Checker function.
+
+Add new checker which receive params. This method can receiver `transform` function
+which will convert checker call arguments into internal representation.
+
+##### Example
+```javascript
+// Define checker
+Type.addMethod('isFinite', (value, expect) => {
+    return isFinite(value) === expect;
+});
+// ... or with transform param
+Type.addMethod('isFinite', (expect = true) => ({expect}), (value, {expect}) => {
+    return isFinite(value) === expect;
+});
+
+// Use it
+const type = TypedProps.isRequired.number.isFinite(true);
+```
+
+### static TypedProps.addProperty()
+```text
+(name:String, checker:CheckerFunc) -> void
+```
+* `name` - New TypedProps property name.
+* `checker` - Checker function.
+
+Define checker which has no parameters.
+
+##### Example
+```javascript
+// Define checker
+Type.addProperty('isFinite', (value) => {
+    return isFinite(value) === true;
+});
+
+// Use it
+const type = Type.isRequired.number.isFinite;
+```
+
+### static TypedProps.getCheck()
+
+```text
 (type:TypedProps, name:string) -> null|*[]
 ```
 
-* `type`. Target type.
-* `name`. Checker name.
-* `=`. Returns array of checker arguments or null if checker is not found.
+* `type` - Target type.
+* `name` - Checker name.
+* `=` Returns array of checker arguments or null if checker is not found.
+
+
+### CheckerFunc Type
+```text
+(value:*, ...params:*) -> Boolean|Issue|Array.<Issue>|void
+```
+
+Checker function is calling from TypedProps to verify value. This function should
+return boolean value, Issue or array of Issue objects.
+
+> Usually checker function should not check undefined value.
+
+### TransformFunc Type
+```text
+(params:...*) -> Object
+```
+
+Transform function receive arguments passed to checker method call and convert it into object.
+
+### Issue Type
+```text
+{
+    path: Array.<String|Number>
+    rule: String,
+    details: Object,
+}
+```
+
+Object representing validation failure.
 
 ### License
 
-MIT.
+Copyright &copy; 2018, Rumkin. Released under [MIT License](LICENSE).

@@ -94,10 +94,24 @@ function addCheckerMethod(cls, name, ...args) {
             args = [transform(...args)];
         }
 
-        clone._checks = [
-            ...this._checks,
-            {name, check, args},
-        ];
+        let isReplaced = false;
+        const checks = [];
+
+        for (const item of this._checks) {
+            if (item.check === check) {
+                checks.push({name, check, args});
+                isReplaced = true;
+            }
+            else {
+                checks.push(item);
+            }
+        }
+
+        if (! isReplaced) {
+            checks.push({name, check, args});
+        }
+
+        clone._checks = checks;
         return clone;
     };
 

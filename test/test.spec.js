@@ -61,7 +61,25 @@ describe('TypedProps', function() {
                 should(check).be.equal(null);
             });
         });
+
+        describe('Replacement', function() {
+            it('Should replace previously defined params', function() {
+                const type = TypedProps
+                    .instanceOf(Array)
+                    .instanceOf(Date);
+
+                const dateReport = TypedProps.check(new Date(), type);
+
+                should(dateReport).has.lengthOf(0);
+
+                const arrayReport = TypedProps.check(new Array(), type);
+
+                should(arrayReport).has.lengthOf(1);
+                should(arrayReport[0].rule).be.equal('instanceOf');
+            });
+        });
     });
+
     describe('Built-in checkers', function() {
         describe('isRequired', function() {
             it('Should pass not undefined', function() {
