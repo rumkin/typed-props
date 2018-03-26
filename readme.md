@@ -24,30 +24,30 @@ Or via unpkg.com:
 
 Define effects:
 ```javascript
-import TypedProps from 'typed-props';
+import Type from 'typed-props';
 
 // Object which properties should pass all checks.
-const shape = TypedProps.shape({
+const shape = Type.shape({
     // Object type rules
 
     // Any value except of undefined
-    anything: TypedProps.isRequired,
+    anything: Type.isRequired,
     // Number property
-    number: TypedProps.number,
+    number: Type.number,
     // String property
-    string: TypedProps.string,
+    string: Type.string,
     // Boolean property
-    bool: TypedProps.bool,
+    bool: Type.bool,
     // Object property
-    object: TypedProps.object,
+    object: Type.object,
     // Array property
-    array: TypedProps.array,
+    array: Type.array,
     // Array property
-    func: TypedProps.func,
+    func: Type.func,
     // Symbol property
-    symbol: TypedProps.symbol,
+    symbol: Type.symbol,
     // Property which value is instance of Date
-    instanceOf: TypedProps.instanceOf(Date),
+    instanceOf: Type.instanceOf(Date),
 
     // Complex rules
 
@@ -55,17 +55,17 @@ const shape = TypedProps.shape({
     // It works like an enum
     oneOf: ['one', 'two'],
     // Check if all array values match the passed TypedProps
-    arrayOf: TypedProps.number,
+    arrayOf: Type.number,
     // Check if value is matched any of passed TypedProps.
-    oneOfType: TypedProps.oneOfType([
-        TypedProps.number,
-        TypedProps.string,
+    oneOfType: Type.oneOfType([
+        Type.number,
+        Type.string,
     ]),
     // Check if all object properties passes the TypedProps.
-    objectOf: TypedProps.objectOf(TypedProps.number),
+    objectOf: Type.objectOf(Type.number),
 });
 
-const report = TypedProps.check({}, shape); // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
+const report = Type.check({}, shape); // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
 ```
 
 Result of `check` call is array of issues. If there is no issue array will be
