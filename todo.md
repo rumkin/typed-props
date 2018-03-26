@@ -2,17 +2,12 @@
 
 ### -
 
-- [ ] Add `validation-report`.
-- [ ] Report stringification.
-
-### v0.5
-
-- [ ] Create TypedProp from array of prop names and it's values.
-- [ ] Clone rules.
+- [ ] Report stringification with intl.
+- [ ] TypedProp serialization/deserialization.
+- [x] Clone rules.
 
 ### v0.4
 
-- [ ] Custom checker.
+- [x] Custom checker.
 - [x] Pure checker with no initial checkers.
     - [x] Create PureProps instance.
-    - [ ] Export or move to separated package.

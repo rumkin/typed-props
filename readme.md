@@ -69,11 +69,11 @@ const shape = Type.shape({
     objectOf: Type.objectOf(Type.number),
 });
 
-const report = Type.check({}, shape); // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
+const issues = Type.check({}, shape); // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
 ```
 
-Result of `check` call is array of issues. If there is no issues, this array will be
-empty. Each item has interface of [validation-report](https://npmjs.com/package/validation-report)'s Issue.
+Result of `check` call is array of [issues](#issue-type). If there is no issues, this array will be
+empty.
 
 ### Custom checkers
 
@@ -126,7 +126,7 @@ Validate `value` to satisfy `type` requirements. Always produce an Array.
 * `transform` - Function that transform params before they got into checker. It works once when type is configuring.
 * `checker` - Checker function.
 
-Add new checker which receive params. This method can receiver `transform` function
+Add new checker which receive params. This method can receive `transform` function
 which will convert checker call arguments into internal representation.
 
 ##### Example
