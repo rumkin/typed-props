@@ -1,6 +1,8 @@
 ![TypedProps](doc/cover.png)
 
-[![npm](https://img.shields.io/npm/v/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
+---
+
+[![npm](https://img.shields.io/npm/v/typed-props.svg?style=flat-square)](https://npmjs.com/package/typed-props)
 [![Travis](https://img.shields.io/travis/rumkin/typed-props.svg?style=flat-square)](https://travis-ci.org/rumkin/typed-props)
 ![](https://img.shields.io/badge/coverage-92.8%25-green.svg?style=flat-square)
 ![](https://img.shields.io/badge/size-6.32%20KiB-blue.svg?style=flat-square)
