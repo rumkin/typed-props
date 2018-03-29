@@ -1,4 +1,4 @@
-# TypedProps
+![conver](doc/cover.png)
 
 [![npm](https://img.shields.io/npm/v/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
 [![Travis](https://img.shields.io/travis/rumkin/typed-props.svg?style=flat-square)](https://travis-ci.org/rumkin/typed-props)
