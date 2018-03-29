@@ -1,10 +1,11 @@
 # TODOLIST
 
-### -
+### Future
 
+- [x] Clone rules.
 - [ ] Report stringification with intl.
 - [ ] TypedProp serialization/deserialization.
-- [x] Clone rules.
+- [ ] Type names.
 
 ### v0.4
 
