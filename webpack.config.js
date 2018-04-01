@@ -3,8 +3,8 @@ const webpack = require('webpack');
 const name = 'typed-props';
 const exportVar = 'TypedProps';
 
-const debug = process.env.NODE_ENV !== 'production';
-const filename = debug ? `${name}.js` : `${name}.min.js`;
+const DEV = process.env.NODE_ENV !== 'production';
+const filename = DEV ? `${name}.js` : `${name}.min.js`;
 
 module.exports = {
   entry: __dirname + '/src/index.js',
@@ -24,7 +24,7 @@ module.exports = {
         },
     ],
   },
-  plugins: debug ? [] : [
+  plugins: DEV ? [] : [
     new webpack.optimize.UglifyJsPlugin(),
   ],
 };
