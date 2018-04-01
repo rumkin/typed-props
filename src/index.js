@@ -1,5 +1,3 @@
-'use strict';
-
 class PureProps {
     constructor() {
         this._checks = [];
@@ -299,10 +297,6 @@ function entries(object) {
 
 function isObject(value) {
     return value !== null && typeof value === 'object';
-}
-
-function returnArgs(...args) {
-    return args;
 }
 
 module.exports = TypedProps;

@@ -1,5 +1,3 @@
-'use strict';
-
 const should = require('should');
 const TypedProps = require('..');
 
@@ -62,6 +60,60 @@ describe('TypedProps', function() {
             });
         });
 
+        describe('addMethod()', function() {
+            it('Should add new checker', function() {
+                class Test extends TypedProps {}
+
+                Test.addMethod('test', function() {});
+
+                should(Test).hasOwnProperty('test').which.is.a.Function();
+            });
+
+            it('Should add throw if checker exists', function() {
+                class Test extends TypedProps {}
+
+                should.throws(() => {
+                    Test.addMethod('test', function() {});
+                    Test.addMethod('test', function() {});
+                }, Error, /Checker 'test' exists/);
+            });
+
+            it('Should add throw if checker is not a function', function() {
+                class Test extends TypedProps {}
+
+                should.throws(() => {
+                    Test.addMethod('test');
+                }, Error, /should be a function/);
+            });
+        });
+
+        describe('addProperty()', function() {
+            it('Should add new checker', function() {
+                class Test extends TypedProps {}
+
+                Test.addProperty('test', function() {});
+
+                should(Test).hasOwnProperty('test').which.is.an.instanceOf(Test);
+            });
+
+            it('Should add throw if checker exists', function() {
+                class Test extends TypedProps {}
+
+                should.throws(() => {
+                    Test.addProperty('test', function() {});
+                    Test.addProperty('test', function() {});
+                }, Error, /Checker 'test' exists/);
+            });
+
+            it('Should add throw if checker is not a function', function() {
+                class Test extends TypedProps {}
+
+                should.throws(() => {
+                    Test.addProperty('test');
+                }, Error, /should be a function/);
+            });
+        });
+
         describe('Replacement', function() {
             it('Should replace previously defined params', function() {
                 const type = TypedProps
@@ -115,6 +167,16 @@ describe('TypedProps', function() {
                 should(report).has.lengthOf(0);
             });
 
+            it('Should pass undefined', function() {
+                const value = undefined;
+
+                const type = TypedProps.number;
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
             it('Should not pass not a number', function() {
                 const value = null;
 
@@ -130,6 +192,16 @@ describe('TypedProps', function() {
         describe('string', function() {
             it('Should pass string', function() {
                 const value = 'hello';
+
+                const type = TypedProps.string;
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
+            it('Should pass undefined', function() {
+                const value = undefined;
 
                 const type = TypedProps.string;
 
@@ -161,6 +233,16 @@ describe('TypedProps', function() {
                 should(report).has.lengthOf(0);
             });
 
+            it('Should pass undefined', function() {
+                const value = undefined;
+
+                const type = TypedProps.bool;
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
             it('Should not pass not boolean', function() {
                 const value = null;
 
@@ -174,7 +256,7 @@ describe('TypedProps', function() {
         });
 
         describe('object', function() {
-            it('Should pass array', function() {
+            it('Should pass object', function() {
                 const value = {};
 
                 const type = TypedProps.object;
@@ -184,7 +266,17 @@ describe('TypedProps', function() {
                 should(report).has.lengthOf(0);
             });
 
-            it('Should not pass not object', function() {
+            it('Should pass undefined', function() {
+                const value = undefined;
+
+                const type = TypedProps.object;
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
+            it('Should not pass not an object', function() {
                 const value = null;
 
                 const type = TypedProps.object;
@@ -199,6 +291,16 @@ describe('TypedProps', function() {
         describe('array', function() {
             it('Should pass array', function() {
                 const value = [];
+
+                const type = TypedProps.array;
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
+            it('Should pass undefined', function() {
+                const value = undefined;
 
                 const type = TypedProps.array;
 
@@ -230,6 +332,16 @@ describe('TypedProps', function() {
                 should(report).has.lengthOf(0);
             });
 
+            it('Should pass undefined', function() {
+                const value = undefined;
+
+                const type = TypedProps.func;
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
             it('Should not pass not function', function() {
                 const value = null;
 
@@ -253,6 +365,16 @@ describe('TypedProps', function() {
                 should(report).has.lengthOf(0);
             });
 
+            it('Should pass undefined', function() {
+                const value = undefined;
+
+                const type = TypedProps.symbol;
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
             it('Should not pass not symbol', function() {
                 const value = null;
 
@@ -265,11 +387,21 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('instanceOf', function() {
+        describe('instanceOf()', function() {
             it('Should pass [] as instance of Array', function() {
                 const value = [];
 
                 const type = TypedProps.instanceOf(Array);
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
+            it('Should pass undefined', function() {
+                const value = undefined;
+
+                const type = TypedProps.instanceOf(Object);
 
                 const report = TypedProps.check(value, type);
 
@@ -293,6 +425,16 @@ describe('TypedProps', function() {
                 const value = 7;
 
                 const type = TypedProps.oneOf([1, 2, 3, 5, 7]);
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
+            it('Should pass undefined', function() {
+                const value = undefined;
+
+                const type = TypedProps.oneOf([]);
 
                 const report = TypedProps.check(value, type);
 
@@ -324,7 +466,31 @@ describe('TypedProps', function() {
                 should(report).has.lengthOf(0);
             });
 
-            it('Should not pass not array of numbers', function() {
+            it('Should pass undefined', function() {
+                const value = undefined;
+
+                const type = TypedProps.arrayOf(TypedProps.isRequired);
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
+            it('Should not pass not array', function() {
+                const value = null;
+
+                const type = TypedProps.arrayOf(
+                    TypedProps.number
+                );
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(1);
+                should(report[0].path).be.deepEqual([]);
+                should(report[0].rule).be.equal('arrayOf');
+            });
+
+            it('Should not pass array of not numbers', function() {
                 const value = [null];
 
                 const type = TypedProps.arrayOf(
@@ -347,6 +513,16 @@ describe('TypedProps', function() {
                     TypedProps.number,
                     TypedProps.string,
                 ]);
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
+            it('Should pass undefined', function() {
+                const value = undefined;
+
+                const type = TypedProps.oneOfType([]);
 
                 const report = TypedProps.check(value, type);
 
@@ -383,6 +559,27 @@ describe('TypedProps', function() {
                 should(report).has.lengthOf(0);
             });
 
+            it('Should pass undefined', function() {
+                const value = undefined;
+
+                const type = TypedProps.objectOf(TypedProps.number);
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
+            it('Should not pass not an Object', function() {
+                const value = null;
+
+                const type = TypedProps.objectOf(TypedProps.number);
+
+                const report = TypedProps.check(value, type);
+
+                should(report[0].path).be.deepEqual([]);
+                should(report[0].rule).be.equal('objectOf');
+            });
+
             it('Should not pass incorrect', function() {
                 const value = {
                     one: 1,
@@ -415,6 +612,27 @@ describe('TypedProps', function() {
                 const report = TypedProps.check(value, type);
 
                 should(report).has.lengthOf(0);
+            });
+
+            it('Should pass undefined', function() {
+                const value = undefined;
+
+                const type = TypedProps.shape({});
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(0);
+            });
+
+            it('Should not pass not an object', function() {
+                const value = null;
+
+                const type = TypedProps.shape({});
+
+                const report = TypedProps.check(value, type);
+
+                should(report).has.lengthOf(1);
+                should(report[0].rule).be.equal('shape');
             });
 
             it('Should not pass incorrect', function() {
