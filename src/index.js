@@ -65,31 +65,31 @@ class PureProps {
     }
 }
 
-function addCheckerMethod(cls, name, ...args) {
+function addCheckerMethod(cls, name, ...addCheckerArgs) {
     let check;
     let transform;
-    if (args.length > 1) {
-        transform = args[0];
-        check = args[1];
+    if (addCheckerArgs.length > 1) {
+        transform = addCheckerArgs[0];
+        check = addCheckerArgs[1];
     }
     else {
         transform = null;
-        check = args[0];
+        check = addCheckerArgs[0];
     }
 
     if (typeof check !== 'function') {
         throw new Error('Argument `check` should be a function');
     }
 
-    const staticMethod = function(...args) {
-        return (new this())[name](...args);
+    const staticMethod = function(...checkerArgs) {
+        return (new this())[name](...checkerArgs);
     };
 
-    const instanceMethod = function(...args) {
+    const instanceMethod = function(...checkerArgs) {
         const clone = new this.constructor();
 
         if (transform) {
-            args = [transform(...args)];
+            checkerArgs = [transform(...checkerArgs)];
         }
 
         let isReplaced = false;
@@ -97,7 +97,7 @@ function addCheckerMethod(cls, name, ...args) {
 
         for (const item of this._checks) {
             if (item.check === check) {
-                checks.push({name, check, args});
+                checks.push({name, check, args: checkerArgs});
                 isReplaced = true;
             }
             else {
@@ -106,7 +106,7 @@ function addCheckerMethod(cls, name, ...args) {
         }
 
         if (! isReplaced) {
-            checks.push({name, check, args});
+            checks.push({name, check, args: checkerArgs});
         }
 
         clone._checks = checks;
@@ -125,7 +125,7 @@ function addCheckerProperty(cls, name, check) {
     Object.defineProperty(cls, name, {
         get() {
             return (new this())[name];
-        }
+        },
     });
 
     Object.defineProperty(cls.prototype, name, {
@@ -133,10 +133,10 @@ function addCheckerProperty(cls, name, check) {
             const clone = new this.constructor();
             clone._checks = [
                 ...this._checks,
-                {name, check, args:[]}
+                {name, check, args:[]},
             ];
             return clone;
-        }
+        },
     });
 }
 
@@ -197,19 +197,14 @@ TypedProps.addMethod('arrayOf', skipUndef(function(value, type) {
         return false;
     }
 
-    const report = value.reduce((report, value, i) => {
-        return [
-            ...report,
-            ...this.constructor.check(value, type)
-            .map((issue) => {
-                return {
-                    path: [i, ...issue.path],
-                    rule: issue.rule,
-                    details: issue.details,
-                };
-            }),
-        ];
-    }, []);
+    let report = [];
+
+    value.forEach((item, i) => {
+        const issues = this.constructor.check(item, type)
+        .map(issuePathPrefixer(i));
+
+        report = [...report, ...issues];
+    });
 
     if (report.length) {
         return report;
@@ -223,20 +218,15 @@ TypedProps.addMethod('objectOf', skipUndef(function(value, type) {
         return false;
     }
 
-    const report = entries(value)
-    .reduce((report, [prop, propValue]) => {
-        return [
-            ...report,
-            ...this.constructor.check(propValue, type)
-            .map((issue) => {
-                return {
-                    path: [prop, ...issue.path],
-                    rule: issue.rule,
-                    details: issue.details,
-                };
-            }),
-        ];
-    }, []);
+    let report = [];
+
+    entries(value)
+    .forEach(([prop, propValue]) => {
+        const issues = this.constructor.check(propValue, type)
+        .map(issuePathPrefixer(prop));
+
+        report = [...report, ...issues];
+    });
 
     if (report.length) {
         return report;
@@ -250,18 +240,15 @@ TypedProps.addMethod('shape', skipUndef(function(value, shape) {
         return false;
     }
 
-    const report = entries(shape)
-    .reduce((report, [prop, type]) => {
-        return [
-            ...report,
-            ...this.constructor.check(value[prop], type)
-            .map((issue) => ({
-                path: [prop, ...issue.path],
-                rule: issue.rule,
-                details: issue.details,
-            })),
-        ];
-    }, []);
+    let report = [];
+
+    entries(shape)
+    .forEach(([prop, type]) => {
+        const issues = this.constructor.check(value[prop], type)
+        .map(issuePathPrefixer(prop));
+
+        report = [...report, ...issues];
+    });
 
     if (report.length) {
         return report;
@@ -291,12 +278,24 @@ function entries(object) {
     return Object.keys(object)
     .reduce((result, key) => [
         ...result,
-        [key, object[key]]
+        [key, object[key]],
     ], []);
 }
 
 function isObject(value) {
     return value !== null && typeof value === 'object';
+}
+
+function addPrefix(prefix, {path, rule, details}) {
+    return {
+        path: [...prefix, ...path],
+        rule,
+        details,
+    };
+}
+
+function issuePathPrefixer(...prefix) {
+    return addPrefix.bind(null, prefix);
 }
 
 module.exports = TypedProps;
