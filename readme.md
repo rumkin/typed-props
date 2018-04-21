@@ -5,7 +5,8 @@
 [![npm](https://img.shields.io/npm/v/typed-props.svg?style=flat-square)](https://npmjs.com/package/typed-props)
 [![Travis](https://img.shields.io/travis/rumkin/typed-props.svg?style=flat-square)](https://travis-ci.org/rumkin/typed-props)
 ![](https://img.shields.io/badge/coverage-100%25-green.svg?style=flat-square)
-![](https://img.shields.io/badge/size-6.32%20KiB-blue.svg?style=flat-square)
+![](https://img.shields.io/badge/size-7.8%20KiB-blue.svg?style=flat-square)
+![](https://img.shields.io/badge/deps-0-blue.svg?style=flat-square)
 [![npm](https://img.shields.io/npm/dm/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
 
 Facebook's PropTypes interface implementation for client and server, reusable
@@ -28,7 +29,41 @@ Or via unpkg.com:
 
 ## Usage
 
-Complete TypedProps rules example:
+Custom types check:
+
+```javascript
+
+import Type, {check} from 'typed-props';
+
+check(1, Type.number);
+check({count: 1}, Type.shape({count: Type.number}));
+```
+
+Function decorator check function arguments:
+```javascript
+import Type, {decorator} from 'typed-props';
+
+class Arith {
+    // Fixed arguments length example
+    @decorator(Type.number, Type.number)
+    add(a, b) {
+        return a + b;
+    }
+
+    // Variadic argument's length example
+    @decorator(Type.number, [Type.number])
+    addAll(a = 0, ...numbers) {
+        return numbers.reduce((sum, b) => sum + b, a);
+    }
+}
+```
+
+> _NOTE_! If invalid arguments passed there will be thrown TypeError with property `issues`.
+
+## Standard checkers
+
+Standard checkers are those which are provided
+by Facebook's PropTypes:
 
 ```javascript
 import Type from 'typed-props';
@@ -77,6 +112,26 @@ const issues = Type.check({}, shape); // => [{path:['anything'], rule: 'isRequir
 
 Result of `check` call is array of [issues](#issue-type). If there is no issues, this array will be
 empty.
+
+### Non-standard checkers
+
+TypedProps have it's own custom checkers which help in difficult cases like
+value-dependent type check:
+
+#### TypedProps.select()
+```
+(...Function|TypedProps) -> TypedProps
+```
+
+Select the first arguments that is not a function or if it's function and it
+returns something truly:
+
+```javascript
+Type.select(
+    ({type}) => type === 'user' && userShape,
+    otherShape
+);
+```
 
 ### Custom checkers
 

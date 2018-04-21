@@ -1,33 +1,33 @@
 const should = require('should');
-const TypedProps = require('..');
+const Type = require('..');
 
 describe('TypedProps', function() {
     describe('Interface', function() {
         it('should be immutable with primitives', function() {
-            const type1 = TypedProps.number;
+            const type1 = Type.number;
             const type2 = type1.isRequired;
 
             should(type1).not.equal(type2);
         });
 
         it('should be immutable with shapes', function() {
-            const shape1 = TypedProps.shape({
-                name: TypedProps.string.isRequired,
+            const shape1 = Type.shape({
+                name: Type.string.isRequired,
             });
             const shape2 = shape1.isRequired;
             should(shape1).not.equal(shape2);
         });
 
         it('should return checks', function() {
-            const type = TypedProps.string.isRequired;
-            const checks = TypedProps.getChecks(type);
+            const type = Type.string.isRequired;
+            const checks = Type.getChecks(type);
 
             should(type._checks).not.equal(checks);
             should(type._checks).deepEqual(checks);
         });
 
         it('should add args transformer', function() {
-            class CustomTypes extends TypedProps {};
+            class CustomTypes extends Type {};
 
             CustomTypes.addMethod('equal', function(val) {
                 return {val};
@@ -46,15 +46,15 @@ describe('TypedProps', function() {
 
         describe('getCheck()', function() {
             it('Should return check by name if it exists', function() {
-                const type = TypedProps.string.isRequired;
-                const check = TypedProps.getCheck(type, 'isRequired');
+                const type = Type.string.isRequired;
+                const check = Type.getCheck(type, 'isRequired');
 
                 should(check).be.instanceOf(Array);
             });
 
             it('Should return null for check wich not exists', function() {
-                const type = TypedProps.string.isRequired;
-                const check = TypedProps.getCheck(type, 'X');
+                const type = Type.string.isRequired;
+                const check = Type.getCheck(type, 'X');
 
                 should(check).be.equal(null);
             });
@@ -62,7 +62,7 @@ describe('TypedProps', function() {
 
         describe('addMethod()', function() {
             it('Should add new checker', function() {
-                class Test extends TypedProps {}
+                class Test extends Type {}
 
                 Test.addMethod('test', function() {});
 
@@ -70,7 +70,7 @@ describe('TypedProps', function() {
             });
 
             it('Should add throw if checker exists', function() {
-                class Test extends TypedProps {}
+                class Test extends Type {}
 
                 should.throws(() => {
                     Test.addMethod('test', function() {});
@@ -79,7 +79,7 @@ describe('TypedProps', function() {
             });
 
             it('Should add throw if checker is not a function', function() {
-                class Test extends TypedProps {}
+                class Test extends Type {}
 
                 should.throws(() => {
                     Test.addMethod('test');
@@ -89,7 +89,7 @@ describe('TypedProps', function() {
 
         describe('addProperty()', function() {
             it('Should add new checker', function() {
-                class Test extends TypedProps {}
+                class Test extends Type {}
 
                 Test.addProperty('test', function() {});
 
@@ -97,7 +97,7 @@ describe('TypedProps', function() {
             });
 
             it('Should add throw if checker exists', function() {
-                class Test extends TypedProps {}
+                class Test extends Type {}
 
                 should.throws(() => {
                     Test.addProperty('test', function() {});
@@ -106,7 +106,7 @@ describe('TypedProps', function() {
             });
 
             it('Should add throw if checker is not a function', function() {
-                class Test extends TypedProps {}
+                class Test extends Type {}
 
                 should.throws(() => {
                     Test.addProperty('test');
@@ -116,15 +116,15 @@ describe('TypedProps', function() {
 
         describe('Replacement', function() {
             it('Should replace previously defined params', function() {
-                const type = TypedProps
+                const type = Type
                     .instanceOf(Array)
                     .instanceOf(Date);
 
-                const dateReport = TypedProps.check(new Date(), type);
+                const dateReport = Type.check(new Date(), type);
 
                 should(dateReport).has.lengthOf(0);
 
-                const arrayReport = TypedProps.check(new Array(), type);
+                const arrayReport = Type.check(new Array(), type);
 
                 should(arrayReport).has.lengthOf(1);
                 should(arrayReport[0].rule).be.equal('instanceOf');
@@ -137,9 +137,9 @@ describe('TypedProps', function() {
             it('Should pass not undefined', function() {
                 const value = 1;
 
-                const type = TypedProps.isRequired;
+                const type = Type.isRequired;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -147,9 +147,9 @@ describe('TypedProps', function() {
             it('Should not pass not undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.isRequired;
+                const type = Type.isRequired;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].rule).be.equal('isRequired');
@@ -160,9 +160,9 @@ describe('TypedProps', function() {
             it('Should pass number', function() {
                 const value = 1;
 
-                const type = TypedProps.number;
+                const type = Type.number;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -170,9 +170,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.number;
+                const type = Type.number;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -180,9 +180,9 @@ describe('TypedProps', function() {
             it('Should not pass not a number', function() {
                 const value = null;
 
-                const type = TypedProps.number;
+                const type = Type.number;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].rule).be.equal('number');
@@ -193,9 +193,9 @@ describe('TypedProps', function() {
             it('Should pass string', function() {
                 const value = 'hello';
 
-                const type = TypedProps.string;
+                const type = Type.string;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -203,9 +203,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.string;
+                const type = Type.string;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -213,9 +213,9 @@ describe('TypedProps', function() {
             it('Should not pass not string', function() {
                 const value = null;
 
-                const type = TypedProps.string;
+                const type = Type.string;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].rule).be.equal('string');
@@ -226,9 +226,9 @@ describe('TypedProps', function() {
             it('Should pass boolean', function() {
                 const value = true;
 
-                const type = TypedProps.bool;
+                const type = Type.bool;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -236,9 +236,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.bool;
+                const type = Type.bool;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -246,9 +246,9 @@ describe('TypedProps', function() {
             it('Should not pass not boolean', function() {
                 const value = null;
 
-                const type = TypedProps.bool;
+                const type = Type.bool;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].rule).be.equal('bool');
@@ -259,9 +259,9 @@ describe('TypedProps', function() {
             it('Should pass object', function() {
                 const value = {};
 
-                const type = TypedProps.object;
+                const type = Type.object;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -269,9 +269,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.object;
+                const type = Type.object;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -279,9 +279,9 @@ describe('TypedProps', function() {
             it('Should not pass not an object', function() {
                 const value = null;
 
-                const type = TypedProps.object;
+                const type = Type.object;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].rule).be.equal('object');
@@ -292,9 +292,9 @@ describe('TypedProps', function() {
             it('Should pass array', function() {
                 const value = [];
 
-                const type = TypedProps.array;
+                const type = Type.array;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -302,9 +302,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.array;
+                const type = Type.array;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -312,9 +312,9 @@ describe('TypedProps', function() {
             it('Should not pass not array', function() {
                 const value = null;
 
-                const type = TypedProps.array;
+                const type = Type.array;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].rule).be.equal('array');
@@ -325,9 +325,9 @@ describe('TypedProps', function() {
             it('Should pass function', function() {
                 const value = function(){};
 
-                const type = TypedProps.func;
+                const type = Type.func;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -335,9 +335,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.func;
+                const type = Type.func;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -345,9 +345,9 @@ describe('TypedProps', function() {
             it('Should not pass not function', function() {
                 const value = null;
 
-                const type = TypedProps.func;
+                const type = Type.func;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].rule).be.equal('func');
@@ -358,9 +358,9 @@ describe('TypedProps', function() {
             it('Should pass symbol', function() {
                 const value = Symbol('Symbol');
 
-                const type = TypedProps.symbol;
+                const type = Type.symbol;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -368,9 +368,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.symbol;
+                const type = Type.symbol;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -378,9 +378,9 @@ describe('TypedProps', function() {
             it('Should not pass not symbol', function() {
                 const value = null;
 
-                const type = TypedProps.symbol;
+                const type = Type.symbol;
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].rule).be.equal('symbol');
@@ -391,9 +391,9 @@ describe('TypedProps', function() {
             it('Should pass [] as instance of Array', function() {
                 const value = [];
 
-                const type = TypedProps.instanceOf(Array);
+                const type = Type.instanceOf(Array);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -401,9 +401,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.instanceOf(Object);
+                const type = Type.instanceOf(Object);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -411,9 +411,9 @@ describe('TypedProps', function() {
             it('Should not {} as instance of Array', function() {
                 const value = {};
 
-                const type = TypedProps.instanceOf(Array);
+                const type = Type.instanceOf(Array);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].rule).be.equal('instanceOf');
@@ -424,9 +424,9 @@ describe('TypedProps', function() {
             it('Should pass correct', function() {
                 const value = 7;
 
-                const type = TypedProps.oneOf([1, 2, 3, 5, 7]);
+                const type = Type.oneOf([1, 2, 3, 5, 7]);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -434,9 +434,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.oneOf([]);
+                const type = Type.oneOf([]);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -444,9 +444,9 @@ describe('TypedProps', function() {
             it('Should not pass not object', function() {
                 const value = 7;
 
-                const type = TypedProps.oneOf([1, 2, 3, 5]);
+                const type = Type.oneOf([1, 2, 3, 5]);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].rule).be.equal('oneOf');
@@ -457,11 +457,11 @@ describe('TypedProps', function() {
             it('Should pass array of numbers', function() {
                 const value = [1];
 
-                const type = TypedProps.arrayOf(
-                    TypedProps.number
+                const type = Type.arrayOf(
+                    Type.number
                 );
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -469,9 +469,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.arrayOf(TypedProps.isRequired);
+                const type = Type.arrayOf(Type.isRequired);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -479,11 +479,11 @@ describe('TypedProps', function() {
             it('Should not pass not array', function() {
                 const value = null;
 
-                const type = TypedProps.arrayOf(
-                    TypedProps.number
+                const type = Type.arrayOf(
+                    Type.number
                 );
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].path).be.deepEqual([]);
@@ -493,11 +493,11 @@ describe('TypedProps', function() {
             it('Should not pass array of not numbers', function() {
                 const value = [null];
 
-                const type = TypedProps.arrayOf(
-                    TypedProps.number
+                const type = Type.arrayOf(
+                    Type.number
                 );
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].path).be.deepEqual([0]);
@@ -509,12 +509,12 @@ describe('TypedProps', function() {
             it('Should pass correct', function() {
                 const value = 'hello';
 
-                const type = TypedProps.oneOfType([
-                    TypedProps.number,
-                    TypedProps.string,
+                const type = Type.oneOfType([
+                    Type.number,
+                    Type.string,
                 ]);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -522,9 +522,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.oneOfType([]);
+                const type = Type.oneOfType([]);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -532,12 +532,12 @@ describe('TypedProps', function() {
             it('Should not pass incorrect', function() {
                 const value = null;
 
-                const type = TypedProps.oneOfType([
-                    TypedProps.number,
-                    TypedProps.string,
+                const type = Type.oneOfType([
+                    Type.number,
+                    Type.string,
                 ]);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].path).be.deepEqual([]);
@@ -552,9 +552,9 @@ describe('TypedProps', function() {
                     two: 0,
                 };
 
-                const type = TypedProps.objectOf(TypedProps.number);
+                const type = Type.objectOf(Type.number);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -562,9 +562,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.objectOf(TypedProps.number);
+                const type = Type.objectOf(Type.number);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -572,9 +572,9 @@ describe('TypedProps', function() {
             it('Should not pass not an Object', function() {
                 const value = null;
 
-                const type = TypedProps.objectOf(TypedProps.number);
+                const type = Type.objectOf(Type.number);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report[0].path).be.deepEqual([]);
                 should(report[0].rule).be.equal('objectOf');
@@ -586,14 +586,54 @@ describe('TypedProps', function() {
                     two: null,
                 };
 
-                const type = TypedProps.objectOf(TypedProps.number);
+                const type = Type.objectOf(Type.number);
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
 
                 should(report[0].path).be.deepEqual(['two']);
                 should(report[0].rule).be.equal('number');
+            });
+        });
+
+        describe('select()', function() {
+            it('Should select type', function() {
+                const selectType = Type.select(
+                    ({type}) => type === 'user' && Type.object.isRequired
+                );
+
+                const report = Type.check({type: 'user'}, selectType);
+                should(report).has.lengthOf(0);
+            });
+
+            it('Should verify type', function() {
+                const userShape = Type.shape({
+                    name: Type.string.isRequired,
+                })
+                .isRequired;
+
+                const selectType = Type.select(
+                    ({type}) => type === 'user' && userShape
+                );
+
+                const report = Type.check({type: 'user'}, selectType);
+
+                should(report).has.lengthOf(1);
+                should(report[0].path).be.deepEqual(['name']);
+                should(report[0].rule).be.equal('isRequired');
+            });
+
+            it('Should return `select` issue if type not selected', function() {
+                const selectType = Type.select(
+                    ({type}) => type === 'user' && Type.object.isRequired
+                );
+
+                const report = Type.check({type: 'file'}, selectType);
+
+                should(report).has.lengthOf(1);
+                should(report[0].path).be.deepEqual([]);
+                should(report[0].rule).be.equal('select');
             });
         });
 
@@ -604,12 +644,12 @@ describe('TypedProps', function() {
                     two: 0,
                 };
 
-                const type = TypedProps.shape({
-                    one: TypedProps.number,
-                    two: TypedProps.number,
+                const type = Type.shape({
+                    one: Type.number,
+                    two: Type.number,
                 });
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -617,9 +657,9 @@ describe('TypedProps', function() {
             it('Should pass undefined', function() {
                 const value = undefined;
 
-                const type = TypedProps.shape({});
+                const type = Type.shape({});
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(0);
             });
@@ -627,9 +667,9 @@ describe('TypedProps', function() {
             it('Should not pass not an object', function() {
                 const value = null;
 
-                const type = TypedProps.shape({});
+                const type = Type.shape({});
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(1);
                 should(report[0].rule).be.equal('shape');
@@ -641,13 +681,13 @@ describe('TypedProps', function() {
                     two: false,
                 };
 
-                const type = TypedProps.shape({
-                    one: TypedProps.number,
-                    two: TypedProps.number,
-                    three: TypedProps.isRequired,
+                const type = Type.shape({
+                    one: Type.number,
+                    two: Type.number,
+                    three: Type.isRequired,
                 });
 
-                const report = TypedProps.check(value, type);
+                const report = Type.check(value, type);
 
                 should(report).has.lengthOf(2);
 
@@ -662,7 +702,7 @@ describe('TypedProps', function() {
 
     describe('Inheritance', function() {
         it('Should inherits all methods and props', function() {
-            class MyTypedProps extends TypedProps {}
+            class MyTypedProps extends Type {}
 
             MyTypedProps.addMethod('equals', function(value, needle) {
                 if (value === undefined) {

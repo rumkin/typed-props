@@ -37,32 +37,101 @@ class PureProps {
     }
 
     static check(value, typedProps) {
-        for (const {name, check, args} of typedProps._checks) {
-            const reports = check.call(typedProps, value, ...args);
+        return check(value, typedProps);
+    }
 
-            if (reports === true || reports === undefined) {
-                continue;
+    static decorator(...types) {
+        return function(proto, name, descriptor) {
+            if (typeof descriptor.value !== 'function') {
+                return descriptor;
             }
 
-            if (reports === false) {
-                return [
-                    {
-                        path: [],
-                        rule: name,
-                        details: {is: false},
-                    },
-                ];
-            }
-            else if (! Array.isArray(reports)) {
-                return [reports];
-            }
-            else {
-                return [...reports];
-            }
+            const origin = descriptor.value;
+
+            return Object.assign({}, descriptor, {
+                value: function(...args) {
+                    const report = checkFunctionArgs(args, types);
+
+                    if (report.length) {
+                        const err = new TypeError('Wrong argument types');
+
+                        throw err;
+                    }
+
+                    return origin.call(this, ...args);
+                },
+            });
+        };
+    }
+}
+
+function check(value, typedProps) {
+    for (const {name, check: checkFn, args} of typedProps._checks) {
+        const reports = checkFn.call(typedProps, value, ...args);
+
+        if (reports === true || reports === undefined) {
+            continue;
         }
 
-        return [];
+        if (reports === false) {
+            return [
+                {
+                    path: [],
+                    rule: name,
+                    details: {is: false},
+                },
+            ];
+        }
+        else if (! Array.isArray(reports)) {
+            return [reports];
+        }
+        else {
+            return [...reports];
+        }
     }
+
+    return [];
+}
+
+function checkFunctionArgs(args, types) {
+    let report = [];
+
+    for (let i = 0; i < types.length; i++) {
+        const type = types[i];
+
+        if (i === types.length - 1 && Array.isArray(type)) {
+            const issues = checkEach(args.slice(i), type[0]);
+
+            if (issues.length) {
+                report = issues.map((item) => {
+                    item.path[0] = item.path[0] + i;
+                });
+                break;
+            }
+        }
+        else {
+            const issues = check(args[i], type);
+
+            if (issues.length) {
+                report = issues;
+                break;
+            }
+        }
+    }
+
+    return report;
+}
+
+function checkEach(args, type) {
+    for (const arg of args) {
+        const issues = check(arg, type);
+
+        if (issues.length) {
+            return issues;
+        }
+    }
+
+    return [];
 }
 
 function addCheckerMethod(cls, name, ...addCheckerArgs) {
@@ -188,6 +257,25 @@ TypedProps.addMethod('oneOfType', skipUndef(function(value, types) {
             return true;
         }
     }
+
+    return false;
+}));
+
+TypedProps.addMethod('select', skipUndef(function(value, ...types) {
+    for (const type of types) {
+        if (typeof type === 'function') {
+            const out = type(value);
+
+            if (out) {
+                return this.constructor.check(value, out);
+            }
+        }
+        else {
+            return this.constructor.check(value, type);
+        }
+    }
+
+    // TODO Return select error
 
     return false;
 }));

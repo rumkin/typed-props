@@ -8,7 +8,7 @@
     "build:dev": "webpack",
     "build:prod": "NODE_ENV=production webpack",
     "cov": "istanbul cover node_modules/mocha/bin/_mocha -- -u exports -R spec test/**.spec.js",
-    "test": "mocha test/**.spec.js",
+    "test": "mocha test/index.js",
     "prepublish": "npm run build"
   },
   "license": "MIT",
