@@ -1,7 +1,6 @@
-var
-tmp
-example
-
+var/
+tmp/
+example/
 
 .dockerignore
 .editorconfig
