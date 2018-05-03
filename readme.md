@@ -39,7 +39,7 @@ check(1, Type.number);
 check({count: 1}, Type.shape({count: Type.number}));
 ```
 
-__Experimental__. Function decorator check function arguments:
+__Experimental Features__. Decorators to check function arguments and return value:
 ```javascript
 import Type, {args, result} from 'typed-props';
 
@@ -116,7 +116,7 @@ const issues = Type.check({}, shape); // => [{path:['anything'], rule: 'isRequir
 Result of `check` call is array of [issues](#issue-type). If there is no issues, this array will be
 empty.
 
-### Non-standard checkers
+## Non-standard checkers
 
 TypedProps have it's own custom checkers which help in difficult cases like
 value-dependent type check:
@@ -126,17 +126,18 @@ value-dependent type check:
 (...Function|TypedProps) -> TypedProps
 ```
 
-Select the first arguments that is not a function or if it's function and it
-returns something truly:
+This checker allow to switch between types depending on input value. It selects
+the first arguments that is not a function or if it's function and it returns
+something truly. Then use it as type to check. It useful when
 
 ```javascript
 Type.select(
-    ({type}) => type === 'user' && userShape,
+    ({type}) => type === 'addUser' && {payload: userShape},
     otherShape
 );
 ```
 
-### Custom checkers
+## Custom checkers
 
 TypedProps could be inherited or extended with new rules.
 

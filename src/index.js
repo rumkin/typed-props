@@ -36,8 +36,8 @@ class PureProps {
         addCheckerProperty(this, name, checker);
     }
 
-    static check(value, typedProps) {
-        return check(value, typedProps);
+    static get check() {
+        return check.bind(this);
     }
 
     static args(...types) {
@@ -90,8 +90,16 @@ class PureProps {
     }
 }
 
+const OBJSTRING = String(Object);
+
 function check(value, typedProps) {
-    for (const {name, check: checkFn, args} of typedProps._checks) {
+    if (isObject(typedProps) && String(typedProps.constructor) === OBJSTRING) {
+        typedProps = this.shape(typedProps);
+    }
+
+    const checks = typedProps._checks;
+
+    for (const {name, check: checkFn, args} of checks) {
         const reports = checkFn.call(typedProps, value, ...args);
 
         if (reports === true || reports === undefined) {
@@ -289,10 +297,10 @@ TypedProps.addMethod('oneOfType', skipUndef(function(value, types) {
 TypedProps.addMethod('select', skipUndef(function(value, ...types) {
     for (const type of types) {
         if (typeof type === 'function') {
-            const out = type(value);
+            const resultType = type(value);
 
-            if (out) {
-                return this.constructor.check(value, out);
+            if (resultType) {
+                return this.constructor.check(value, resultType);
             }
         }
         else {

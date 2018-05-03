@@ -3,29 +3,6 @@ const Type = require('..');
 
 describe('TypedProps', function() {
     describe('Interface', function() {
-        it('should be immutable with primitives', function() {
-            const type1 = Type.number;
-            const type2 = type1.isRequired;
-
-            should(type1).not.equal(type2);
-        });
-
-        it('should be immutable with shapes', function() {
-            const shape1 = Type.shape({
-                name: Type.string.isRequired,
-            });
-            const shape2 = shape1.isRequired;
-            should(shape1).not.equal(shape2);
-        });
-
-        it('should return checks', function() {
-            const type = Type.string.isRequired;
-            const checks = Type.getChecks(type);
-
-            should(type._checks).not.equal(checks);
-            should(type._checks).deepEqual(checks);
-        });
-
         it('should add args transformer', function() {
             class CustomTypes extends Type {};
 
@@ -44,7 +21,46 @@ describe('TypedProps', function() {
             should(CustomTypes.check(2, type)).has.lengthOf(1);
         });
 
-        describe('getCheck()', function() {
+        describe('Type.check()', function() {
+            it('Should check values', function() {
+                const value = undefined;
+
+                const type = Type.isRequired;
+
+                const report = Type.check(value, type);
+
+                should(report).has.lengthOf(1);
+                should(report[0].path).be.deepEqual([]);
+                should(report[0].rule).be.equal('isRequired');
+            });
+
+            it('Should convert plain object to shape', function() {
+                const value = {count: '1'};
+
+                const type = {
+                    count: Type.number,
+                };
+
+                const report = Type.check(value, type);
+
+                should(report).has.lengthOf(1);
+                should(report[0].path).be.deepEqual(['count']);
+                should(report[0].rule).be.equal('number');
+            });
+        });
+
+        describe('Type.getChecks()', function() {
+            it('should return array checks', function() {
+                const type = Type.string.isRequired;
+                const checks = Type.getChecks(type);
+
+                should(checks).be.an.Array();
+                should(type._checks).not.equal(checks);
+                should(type._checks).deepEqual(checks);
+            });
+        });
+
+        describe('Type.getCheck()', function() {
             it('Should return check by name if it exists', function() {
                 const type = Type.string.isRequired;
                 const check = Type.getCheck(type, 'isRequired');
@@ -60,7 +76,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('addMethod()', function() {
+        describe('Type.addMethod()', function() {
             it('Should add new checker', function() {
                 class Test extends Type {}
 
@@ -87,7 +103,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('addProperty()', function() {
+        describe('Type.addProperty()', function() {
             it('Should add new checker', function() {
                 class Test extends Type {}
 
@@ -114,7 +130,22 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('Replacement', function() {
+        describe('Immutablitiy', function() {
+            it('should be immutable with primitives', function() {
+                const type1 = Type.number;
+                const type2 = type1.isRequired;
+
+                should(type1).not.equal(type2);
+            });
+
+            it('should be immutable with shapes', function() {
+                const shape1 = Type.shape({
+                    name: Type.string.isRequired,
+                });
+                const shape2 = shape1.isRequired;
+                should(shape1).not.equal(shape2);
+            });
+
             it('Should replace previously defined params', function() {
                 const type = Type
                     .instanceOf(Array)
@@ -133,7 +164,7 @@ describe('TypedProps', function() {
     });
 
     describe('Built-in checkers', function() {
-        describe('isRequired', function() {
+        describe('isRequired()', function() {
             it('Should pass not undefined', function() {
                 const value = 1;
 
@@ -156,7 +187,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('number', function() {
+        describe('number()', function() {
             it('Should pass number', function() {
                 const value = 1;
 
@@ -189,7 +220,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('string', function() {
+        describe('string()', function() {
             it('Should pass string', function() {
                 const value = 'hello';
 
@@ -222,7 +253,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('bool', function() {
+        describe('bool()', function() {
             it('Should pass boolean', function() {
                 const value = true;
 
@@ -255,7 +286,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('object', function() {
+        describe('object()', function() {
             it('Should pass object', function() {
                 const value = {};
 
@@ -288,7 +319,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('array', function() {
+        describe('array()', function() {
             it('Should pass array', function() {
                 const value = [];
 
@@ -321,7 +352,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('func', function() {
+        describe('func()', function() {
             it('Should pass function', function() {
                 const value = function(){};
 
@@ -354,7 +385,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('symbol', function() {
+        describe('symbol()', function() {
             it('Should pass symbol', function() {
                 const value = Symbol('Symbol');
 
@@ -420,7 +451,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('oneOf', function() {
+        describe('oneOf()', function() {
             it('Should pass correct', function() {
                 const value = 7;
 
@@ -453,7 +484,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('arrayOf', function() {
+        describe('arrayOf()', function() {
             it('Should pass array of numbers', function() {
                 const value = [1];
 
@@ -505,7 +536,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('oneOfType', function() {
+        describe('oneOfType()', function() {
             it('Should pass correct', function() {
                 const value = 'hello';
 
@@ -545,7 +576,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('objectOf', function() {
+        describe('objectOf()', function() {
             it('Should pass correct', function() {
                 const value = {
                     one: 1,
@@ -637,7 +668,7 @@ describe('TypedProps', function() {
             });
         });
 
-        describe('shape', function() {
+        describe('shape()', function() {
             it('Should pass correct', function() {
                 const value = {
                     one: 1,
