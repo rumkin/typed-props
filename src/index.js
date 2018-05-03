@@ -40,7 +40,7 @@ class PureProps {
         return check(value, typedProps);
     }
 
-    static decorator(...types) {
+    static args(...types) {
         return function(proto, name, descriptor) {
             if (typeof descriptor.value !== 'function') {
                 return descriptor;
@@ -54,11 +54,36 @@ class PureProps {
 
                     if (report.length) {
                         const err = new TypeError('Wrong argument types');
-
+                        err.issues = report;
                         throw err;
                     }
 
                     return origin.call(this, ...args);
+                },
+            });
+        };
+    }
+
+    static result(type) {
+        return function(proto, name, descriptor) {
+            if (typeof descriptor.value !== 'function') {
+                return descriptor;
+            }
+
+            const origin = descriptor.value;
+
+            return Object.assign({}, descriptor, {
+                value: function(...args) {
+                    const result = origin.call(this, ...args);
+
+                    const report = check(result, type);
+                    if (report.length) {
+                        const err = new TypeError('Wrong result type');
+                        err.issues = report;
+                        throw err;
+                    }
+
+                    return result;
                 },
             });
         };

@@ -12,7 +12,7 @@
 - [x] Code refactored.
 - [x] Decorators:
     - [x] Function arguments decorator.
-    - [ ] Function return value decorator.
+    - [x] Function return value decorator.
 - [x] Add `select` checker which can determine what rules to use:
     ```javascript
     // Select type by value's `type` property.

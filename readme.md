@@ -39,26 +39,29 @@ check(1, Type.number);
 check({count: 1}, Type.shape({count: Type.number}));
 ```
 
-Function decorator check function arguments:
+__Experimental__. Function decorator check function arguments:
 ```javascript
-import Type, {decorator} from 'typed-props';
+import Type, {args, result} from 'typed-props';
 
 class Arith {
     // Fixed arguments length example
-    @decorator(Type.number, Type.number)
+    @args(Type.number, Type.number)
+    @result(Type.number)
     add(a, b) {
         return a + b;
     }
 
     // Variadic argument's length example
-    @decorator(Type.number, [Type.number])
+    @args(Type.number, [Type.number])
+    @result(Type.number)
     addAll(a = 0, ...numbers) {
         return numbers.reduce((sum, b) => sum + b, a);
     }
 }
 ```
 
-> _NOTE_! If invalid arguments passed there will be thrown TypeError with property `issues`.
+> _NOTE_! If invalid arguments passed Error with type TypeError and property `issues`
+  will be thrown.
 
 ## Standard checkers
 
