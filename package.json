@@ -1,6 +1,6 @@
 {
   "name": "typed-props",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Facebook's PropTypes standalone extensible implementation for browser and server",
   "main": "src/index.js",
   "scripts": {
@@ -9,7 +9,8 @@
     "build:prod": "NODE_ENV=production webpack",
     "cov": "istanbul cover node_modules/mocha/bin/_mocha -- -u exports -R spec test/**.spec.js",
     "test": "mocha test/index.js",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "shasum": "bash -c 'for file in $@; do shasum -b -a 384 $file | xxd -r -p | base64; done' -- "
   },
   "license": "MIT",
   "devDependencies": {
