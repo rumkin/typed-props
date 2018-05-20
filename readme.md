@@ -23,17 +23,11 @@ npm i typed-props
 Or via unpkg.com:
 
 ```html
-<script
-    src="https://unpkg.com/typed-props@0.10.2/dist/typed-props.js"
-    integrity="sha384-D/+xE16PBr9hlzxEC0RPfUL7d+JFQsU7vQ29JzrixCMWuPEwCZ3M0EPO8NEBlb8D"
-    crossorigin="anonymous"
-></script>
-<script
-    src="https://unpkg.com/typed-props@0.10.2/dist/typed-props.min.js"
-    integrity="sha384-zN1E3gIXzQZtOteUe1I6Mot0punN2Gs/i7pV4hUnVmz2YTXv3/I+JmXTi3O+DHtL"
-    crossorigin="anonymous"
-></script>
+<script src="https://unpkg.com/typed-props@0/dist/typed-props.js"></script>
+<script src="https://unpkg.com/typed-props@0/dist/typed-props.min.js"></script>
 ```
+
+Complete [usage guide](doc).
 
 ## Usage
 
