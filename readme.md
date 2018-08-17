@@ -10,8 +10,19 @@
 [![npm](https://img.shields.io/npm/dm/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
 
 Facebook's PropTypes interface implementation for client and server, reusable
-and extensible. It produce error reports as array of objects instead of throwing
-or printing into console. And it works *without* React.
+and extensible. It produce error reports instead of throwing or printing into
+console. It could work *without React*.
+
+## Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Standard checkers](#standard-checkers)
+- [Non-standard checkers](#non-standard-checkers)
+- [Custom checkers](#custom-checkers)
+- [API](#api)
+- [License](#license)
 
 ## Installation
 
@@ -67,8 +78,7 @@ class Arith {
 
 ## Standard checkers
 
-Standard checkers are those which are provided
-by Facebook's PropTypes:
+Standard checkers are those which are provided by Facebook's PropTypes:
 
 ```javascript
 import Type from 'typed-props';
@@ -123,19 +133,20 @@ empty.
 TypedProps have it's own custom checkers which help in difficult cases like
 value-dependent type check:
 
-#### TypedProps.select()
+### `TypedProps.select()`
 ```
 (...Function|TypedProps) -> TypedProps
 ```
 
-This checker allow to switch between types depending on input value. It selects
-the first arguments that is not a function or if it's function and it returns
-something truly. Then use it as type to check. It useful when
+This checker allow to dynamically switch between types depending on input value.
+It selects the first arguments that is not a function or if it's function and
+it returns something truly. Then use it as type to check.
 
 ```javascript
 Type.select(
-    ({type}) => type === 'addUser' && {payload: userShape},
-    otherShape
+    (value) => (typeof value === 'string') && Type.string,
+    (value) => (typeof value === 'number') && Type.number,
+    Type.object
 );
 ```
 
@@ -174,14 +185,14 @@ Type.check(Infinity, MyType.infinity); // -> []
 
 ## API
 
-### static TypedProps.check()
+### `TypedProps.check()`
 ```text
 (value:*, type:TypedProps) -> Array.<Issue>
 ```
 
 Validate `value` to satisfy `type` requirements. Always produce an Array.
 
-### static TypedProps.addMethod()
+### `TypedProps.addMethod()`
 ```text
 (name:String, [transform:TransformFunc,] checker:CheckerFunc) -> void
 ```
@@ -208,7 +219,7 @@ Type.addMethod('isFinite', (expect = true) => ({expect}), (value, {expect}) => {
 const type = TypedProps.isRequired.number.isFinite(true);
 ```
 
-### static TypedProps.addProperty()
+### `TypedProps.addProperty()`
 ```text
 (name:String, checker:CheckerFunc) -> void
 ```
@@ -228,7 +239,7 @@ Type.addProperty('isFinite', (value) => {
 const type = Type.isRequired.number.isFinite;
 ```
 
-### static TypedProps.getCheck()
+### `TypedProps.getCheck()`
 
 ```text
 (type:TypedProps, name:string) -> null|*[]
@@ -239,7 +250,7 @@ const type = Type.isRequired.number.isFinite;
 * `=` Returns array of checker arguments or null if checker is not found.
 
 
-### CheckerFunc Type
+### `CheckerFunc` Type
 ```text
 (value:*, ...params:*) -> Boolean|Issue|Array.<Issue>|void
 ```
@@ -249,14 +260,14 @@ return boolean value, Issue or array of Issue objects.
 
 > Usually checker function should not check undefined value.
 
-### TransformFunc Type
+### `TransformFunc` Type
 ```text
 (params:...*) -> Object
 ```
 
 Transform function receive arguments passed to checker method call and convert it into object.
 
-### Issue Type
+### `Issue` Type
 ```text
 {
     path: Array.<String|Number>
