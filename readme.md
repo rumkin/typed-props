@@ -15,7 +15,6 @@ console. It could work *without React*.
 
 ## Table of Contents
 
-- [Table of Contents](#table-of-contents)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Standard checkers](#standard-checkers)
