@@ -1,5 +1,5 @@
 const should = require('should');
-const {Type, StrictType, getChecks, getCheckParams, check, CHECK, CHECKS} = require('../');
+const {Type, StrictType, getChecks, getRuleParams, check, CHECK, CHECKS} = require('../');
 
 /* global describe */
 /* global it */
@@ -31,17 +31,17 @@ describe('TypedProps', function() {
       });
     });
 
-    describe('getCheckParams()', function() {
+    describe('getRuleParams()', function() {
       it('Should return check by name if it exists', function() {
         const type = Type.string.isRequired;
-        const check = getCheckParams(type, 'isRequired');
+        const check = getRuleParams(type, 'isRequired');
 
         should(check).be.deepEqual({isRequired: true});
       });
 
       it('Should return null for check wich not exists', function() {
         const type = Type.string.isRequired;
-        const check = getCheckParams(type, 'X');
+        const check = getRuleParams(type, 'X');
 
         should(check).be.equal(void 0);
       });
