@@ -1,5 +1,5 @@
 const should = require('should');
-const {Type, StrictType, getChecks, getCheckParams, check, CHECK, CHECKS} = require('../build');
+const {Type, StrictType, getChecks, getCheckParams, check, CHECK, CHECKS} = require('../');
 
 /* global describe */
 /* global it */
