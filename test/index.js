@@ -1,2 +1,2 @@
-require('./test.spec.js');
+require('./types.spec.js');
 require('./decorators.spec.js');
