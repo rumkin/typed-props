@@ -35,7 +35,7 @@
     "url": "git+https://github.com/rumkin/typed-props.git"
   },
   "engines": {
-    "node": ">=0.6.0"
+    "node": ">=8.0"
   },
   "keywords": [
     "validator",
