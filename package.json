@@ -27,7 +27,7 @@
     "typescript": "^3.3.4000"
   },
   "directories": {
-    "example": "example",
+    "example": "examples",
     "test": "test"
   },
   "dependencies": {},
