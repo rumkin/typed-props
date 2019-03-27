@@ -17,8 +17,10 @@ console. It works *without React*.
 
 - [Installation](#installation)
 - [Usage](#usage)
+- [Examples](#examples)
 - [Standard checks](#standard-checks)
 - [Non-standard checks](#non-standard-checks)
+- [Decorators](#decorators)
 - [Checks and groups](#checks-and-groups)
 - [Extension](#extension)
 - [API](#api)
@@ -112,28 +114,10 @@ Example:
 ]
 ```
 
-__Experimental Feature__. Decorators to check function arguments and returned value:
-```javascript
-import {StrictType as T, args, result} from 'typed-props'
+## Examples
 
-class Arith {
-  // Fixed arguments length example
-  @args(T.number, T.number)
-  @result(T.number)
-  add(a, b) {
-    return a + b
-  }
-
-  // Variadic argument's length example
-  @args(T.number, [T.number])
-  @result(T.number)
-  addAll(a = 0, ...numbers) {
-    return numbers.reduce((sum, b) => sum + b, a)
-  }
-}
-```
-
-> _NOTE_! Decorators throws CheckError with `issues` property.
+* Create [UniqItems check](examples/uniq-items.js).
+* [Describe API](examples/api.js) with TypedProps (with circular references resolution).
 
 ## Standard checks
 
@@ -184,7 +168,6 @@ const shape = Type.shape({
     id: Type.number,
     name: Type.string,
   }),
-  customType: Type.custom((value) => value > 0 && value < 100),
 })
 
 const issues = check({}, shape) // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
@@ -193,7 +176,33 @@ const issues = check({}, shape) // => [{path:['anything'], rule: 'isRequired', d
 Result of `check` call is array of [issues](#issue-type). If there is no issues, this array will be
 empty.
 
+> ⚠️ Rules could not accept functions as arguments to override default dehaviour like PropTypes do.
+
 ## Non-standard checks
+
+```javascript
+Type.shape({
+  // Make type optional
+  optionalValue: Type.optional,
+  // Determine type in runtime
+  propertyDependantType: Type.select(
+    [
+      ({type}) => type === 'ADD_TODO',
+      Type.shape({/* ADD_TODO action payload shape */}),
+    ],
+    [
+      ({type}) => type === 'SET_COMPLETED',
+      Type.shape({/* SET_COMPLETED action payload shape */}),
+    ],
+    [
+      () => true,
+      Type.any
+    ],
+  ),
+  // Create custom checks when TypedProps is not enough.
+  customValue: Type.custom((value) => value === Math.PI),
+})
+```
 
 TypedProps have it's own custom checks which make it more handful.
 
@@ -221,6 +230,32 @@ Type.select(
   [(value) => (typeof value === 'number'), Type.number],
   [() => true, Type.any] // Otherwise accept anything
 )
+```
+
+## Decorators
+
+__Experimental Feature__. Decorators can check function arguments and value it returns in runtime.
+
+> ⚠️ Decorators throw CheckError with `issues` property.
+
+```javascript
+import {StrictType as T, args, result} from 'typed-props'
+
+class Arith {
+  // Fixed arguments length example
+  @args(T.number, T.number)
+  @result(T.number)
+  add(a, b) {
+    return a + b
+  }
+
+  // Variadic argument's length example
+  @args(T.number, [T.number])
+  @result(T.number)
+  addAll(a = 0, ...numbers) {
+    return numbers.reduce((sum, b) => sum + b, a)
+  }
+}
 ```
 
 ## Checks and groups
