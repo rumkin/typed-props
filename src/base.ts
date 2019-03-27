@@ -11,7 +11,7 @@ export type Issue = {
   rule: string
   path: Array<string|number>
   details: {
-    reason: String
+    reason: string
     [key:string]: any
   }
 }

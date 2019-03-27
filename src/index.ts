@@ -529,6 +529,30 @@ class Select extends UniqRule {
   }
 }
 
+class Custom extends UniqRule {
+  static config(check: Function, ...args: any[]): object {
+    if (typeof check !== 'function') {
+      throw new TypeError('Argument #1 is not a function');
+    }
+
+    return {check, args};
+  }
+
+  static check(it: any, {check, args}): Issue[] {
+    if (check(it, ...args) === true) {
+      return [];
+    }
+
+    return [{
+      rule: this.ruleName,
+      path: [],
+      details: {
+        reason: 'mismatch',
+      },
+    }];
+  }
+}
+
 /* istanbul ignore next */
 class TypedProps extends Checkable {
   // Existence types
@@ -747,6 +771,16 @@ class TypedProps extends Checkable {
   select(..._select: any[]): TypedProps {
     return this
   }
+
+  @toStatic(Custom)
+  static custom(_check: Function, ..._args: any[]): TypedProps {
+    return new this();
+  }
+
+  @toInstance(Custom)
+  custom() {
+    return this;
+  }
 }
 
 const strictOptions = {
@@ -923,6 +957,16 @@ class StrictTypedProps extends TypedProps {
   @toInstance(Select)
   select(..._select: any[]): TypedProps {
     return this
+  }
+
+  @toStatic(Custom, strictOptions)
+  static custom(_check: Function, ..._args: any[]): TypedProps {
+    return new this();
+  }
+
+  @toInstance(Custom)
+  custom() {
+    return this;
   }
 }
 

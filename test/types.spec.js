@@ -539,6 +539,24 @@ describe('TypedProps', function() {
         should(report[0].details.type).be.equal('object')
       })
 
+      it('Should check an array', function() {
+        const value = [null, null]
+
+        const type = Type.shape([
+          Type.number,
+          Type.string,
+        ])
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(2)
+        should(report[0].rule).be.equal('type')
+        should(report[0].details.type).be.equal('number')
+
+        should(report[1].rule).be.equal('type')
+        should(report[1].details.type).be.equal('string')
+      })
+
       it('Should not pass incorrect', function() {
         const value = {
           one: 1,
@@ -702,6 +720,37 @@ describe('TypedProps', function() {
         )
       })
     })
+
+    describe('.custom', () => {
+      it('Should execute check', () => {
+        const type = Type.custom(() => false)
+        const issues = check(undefined, type)
+
+        should(issues).has.lengthOf(1);
+      })
+
+      it('Should pass valid value', () => {
+        const type = Type.custom((value) => value === true)
+        const issues = check(true, type)
+
+        should(issues).has.lengthOf(0);
+      })
+
+      it('Should handle even undefined values', () => {
+        const type = Type.custom((it) => it !== void 0)
+        const issues = check(undefined, type)
+
+        should(issues).has.lengthOf(1);
+      })
+
+      it('Should throw on `null` argument', () => {
+        should.throws(
+          () => Type.custom(null),
+          TypeError,
+          'Argument #1 is not a function'
+        )
+      })
+    })
   })
   
   describe('StrictTypedProps', () => {
@@ -828,6 +877,16 @@ describe('TypedProps', function() {
     describe('.select()', () => {
       it('Should add isRequired by default', () => {
         const type = StrictType.select([() => true, StrictType.any])
+        const report = check(void 0, type)
+  
+        should(report).has.lengthOf(1)
+        should(report[0].rule).be.equal('isRequired')
+      })
+    })
+
+    describe('.custom()', () => {
+      it('Should add isRequired by default', () => {
+        const type = StrictType.custom(() => false)
         const report = check(void 0, type)
   
         should(report).has.lengthOf(1)
