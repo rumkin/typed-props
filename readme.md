@@ -335,7 +335,7 @@ requires `ckeckIt` method wich should return `boolean` value.
 
 ```javascript
 class IsArray extends SimpleRule {
-    static ruleName = 'equals'
+    static ruleName = 'isArray'
 
     static checkIt(it) {
         return Array.isArray(it)
