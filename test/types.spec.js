@@ -647,6 +647,68 @@ describe('TypedProps', function() {
       });
     });
 
+    describe('exact()', function() {
+      it('Should pass correct', function() {
+        const value = {
+          one: 1,
+          two: 0,
+        };
+  
+        const type = Type.exact({
+          one: Type.number,
+          two: Type.number,
+        });
+  
+        const report = check(value, type);
+  
+        should(report).has.lengthOf(0);
+      });
+  
+      it('Should pass undefined', function() {
+        const value = void 0;
+  
+        const type = Type.exact({});
+  
+        const report = check(value, type);
+  
+        should(report).has.lengthOf(0);
+      });
+  
+      it('Should not pass not an object', function() {
+        const value = null;
+  
+        const type = Type.shape({});
+  
+        const report = check(value, type);
+  
+        should(report).has.lengthOf(1);
+        should(report[0].rule).be.equal('shape');
+      });
+  
+      it('Should not pass incorrect', function() {
+        const value = {
+          one: 1,
+          two: 2,
+          three: true,
+        };
+  
+        const type = Type.exact({
+          one: Type.number,
+          two: Type.bool,
+        });
+  
+        const report = check(value, type);
+  
+        should(report).has.lengthOf(2);
+  
+        should(report[0].path).be.deepEqual(['two']);
+        should(report[0].rule).be.equal('bool');
+  
+        should(report[1].path).be.deepEqual(['three']);
+        should(report[1].rule).be.equal('shape');
+        should(report[1].details).be.deepEqual({reason: 'unwanted'});
+      });
+    });
   });
   
   describe('StrictTypedProps', () => {

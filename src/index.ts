@@ -402,6 +402,53 @@ class Shape extends UniqRule {
   }
 }
 
+class Exact extends UniqRule {
+  static ruleName = 'shape';
+
+  static format(shape: ShapeType): Object {
+    return {shape};
+  }
+
+  @skipUndefined
+  static check(it:any, {shape}: {shape: ShapeType}): Issue[] {
+    if (! isObject(it) || ! isPlainObject(it)) {
+      return [{
+        rule: this.ruleName,
+        path: [],
+        details: {
+          reason: 'not_an_object'
+        },
+      }];
+    }
+
+    const issues =  Object.entries(shape)
+    .map(([i, type]) => {
+      const issues = check(it[i], type);
+
+      return issues.map(({path, ...rest}) => ({
+        path: [i, ...path],
+        ...rest,
+      }));
+    })
+    .filter((item) => item !== null)
+    .reduce((result, item) => result.concat(item), []);
+
+    for (const prop of Object.getOwnPropertyNames(it)) {
+      if (! shape.hasOwnProperty(prop)) {
+        issues.push({
+          rule: this.ruleName,
+          path: [prop],
+          details: {
+            reason: 'unwanted',
+          },
+        });
+      }
+    }
+
+    return issues;
+  }
+}
+
 class Select extends UniqRule {
   static ruleName = 'select';
 
@@ -461,6 +508,14 @@ class Select extends UniqRule {
 
 class TypedProps extends Checkable {
   // Existence types
+
+  static get any() {
+    return new this();
+  }
+
+  get any() {
+    return new (<any>this.constructor([...this.getChecks()]));
+  }
 
   // Required
 
@@ -643,6 +698,20 @@ class TypedProps extends Checkable {
   shape(_shape: ShapeType): TypedProps {
     return this;
   }
+
+  // Exact
+
+  @toStatic(Exact)
+  static exact(_shape: ShapeType): TypedProps {
+    return new this();
+  }
+
+  @toInstance(Exact)
+  exact(_shape: ShapeType): TypedProps {
+    return this;
+  }
+
+  // Select
 
   @toStatic(Select)
   static select(..._select: any[]): TypedProps {

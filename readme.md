@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/typed-props.svg?style=flat-square)](https://npmjs.com/package/typed-props)
 [![Travis](https://img.shields.io/travis/rumkin/typed-props.svg?style=flat-square)](https://travis-ci.org/rumkin/typed-props)
 ![](https://img.shields.io/badge/coverage-100%25-green.svg?style=flat-square)
-![](https://img.shields.io/badge/size-8.25%20KiB-blue.svg?style=flat-square)
+![](https://img.shields.io/badge/size-11.8%20KiB-blue.svg?style=flat-square)
 ![](https://img.shields.io/badge/deps-0-blue.svg?style=flat-square)
 [![npm](https://img.shields.io/npm/dm/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
 
@@ -129,6 +129,11 @@ const shape = Type.shape({
     ]),
     // Check if all object properties passes the TypedProps.
     objectOf: Type.objectOf(Type.number),
+    // Check shape has described properties and no other props.
+    exactShape: Type.exact({
+        id: Type.number,
+        name: Type.string,
+    }),
 });
 
 const issues = check({}, shape); // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
@@ -248,7 +253,7 @@ Validate `value` to satisfy `type` requirements. Always produce an Array of Issu
 
 Receive `rule` params by its' name.
 
-### listRules()
+### `listRules()`
 
 ```
 (type:TypedProps) -> string[]
