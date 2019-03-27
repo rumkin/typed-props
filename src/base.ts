@@ -88,7 +88,7 @@ export class Checkable {
     const checks = this[CHECKS];
 
     for (const {params, check} of checks) {
-      const result = check(it, params, <unknown>this.constructor as CheckableType);
+      const result = check(it, params, this);
       if (result.length) {
         return result;
       }
