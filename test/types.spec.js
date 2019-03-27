@@ -580,6 +580,73 @@ describe('TypedProps', function() {
         should(report[1].path).be.deepEqual(['three'])
         should(report[1].rule).be.equal('isRequired')
       })
+
+      it('Should pass nested shapes', function() {
+        const value = {
+          user: {
+            name: 'Julio',
+          },
+        }
+
+        const type = Type.shape({
+          user: {
+            name: Type.string.isRequired
+          },
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should check nested shapes', function() {
+        const value = {
+          user: {
+            name: 'Julio',
+          },
+        }
+
+        const type = Type.shape({
+          user: {
+            name: Type.string.isRequired,
+            money: Type.number.isRequired,
+          },
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(1)
+      })
+
+      it('Should pass function rule', function() {
+        const value = {
+          amount: 1,
+        }
+
+        const type = Type.shape({
+          amount: () => Type.number,
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should check function rule', function() {
+        const value = {
+          amount: null,
+        }
+
+        const type = Type.shape({
+          amount: () => Type.number,
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(1)
+        should(report[0].rule).be.equal('type')
+        should(report[0].details.type).be.equal('number')
+      })
     })
 
     describe('.exact()', function() {
@@ -644,6 +711,83 @@ describe('TypedProps', function() {
         should(report[0].details.type).be.equal('bool')
   
         should(report[1].path).be.deepEqual(['three'])
+        should(report[1].rule).be.equal('shape')
+        should(report[1].details).be.deepEqual({reason: 'redundant'})
+      })
+
+      it('Should pass nested shapes', function() {
+        const value = {
+          user: {
+            name: 'Julio',
+          },
+        }
+
+        const type = Type.exact({
+          user: {
+            name: Type.string.isRequired
+          },
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should check nested shapes', function() {
+        const value = {
+          user: {
+            name: 'Julio',
+            extraProperty: true,
+          },
+        }
+
+        const type = Type.exact({
+          user: {
+            name: Type.string.isRequired,
+            money: Type.number.isRequired,
+          },
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(2)
+
+        should(report[1].path).be.deepEqual(['user', 'extraProperty'])
+        should(report[1].rule).be.equal('shape')
+        should(report[1].details).be.deepEqual({reason: 'redundant'})
+      })
+
+      it('Should pass function rule', function() {
+        const value = {
+          amount: 1,
+        }
+
+        const type = Type.exact({
+          amount: () => Type.number,
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should check function rule', function() {
+        const value = {
+          amount: null,
+          extraProperty: true,
+        }
+
+        const type = Type.exact({
+          amount: () => Type.number,
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(2)
+        should(report[0].rule).be.equal('type')
+        should(report[0].details.type).be.equal('number')
+        
+        should(report[1].path).be.deepEqual(['extraProperty'])
         should(report[1].rule).be.equal('shape')
         should(report[1].details).be.deepEqual({reason: 'redundant'})
       })

@@ -417,12 +417,27 @@ class Shape extends UniqRule {
   @skip(isUndefined)
   static check(it:any, {shape}: {shape: ShapeType}): Issue[] {
     return Object.entries(shape).map(([i, type]) => {
-      const issues = check(it[i], type)
-
-      return issues.map(({path, ...rest}) => ({
-        path: [i, ...path],
-        ...rest,
-      }))
+      if (isObject(type) && isPlainObject(type)) {
+        return this.check(it[i], {shape: <unknown>type as ShapeType})
+        .map(({path, ...rest}) => ({
+          path: [i, ...path],
+          ...rest,
+        }))
+      }
+      else {
+        let issues;
+        if (typeof type === 'function') {
+          issues = check(it[i], (<unknown>type as Function)())
+        }
+        else {
+          issues = check(it[i], type)
+        }
+  
+        return issues.map(({path, ...rest}) => ({
+          path: [i, ...path],
+          ...rest,
+        }))
+      }
     })
     .filter((item) => item !== null)
     .reduce((result, item) => result.concat(item), [])
@@ -452,17 +467,7 @@ class Exact extends UniqRule {
 
   @skip(isUndefined)
   static check(it:any, {shape}: {shape: ShapeType}): Issue[] {
-    const issues =  Object.entries(shape)
-    .map(([i, type]) => {
-      const issues = check(it[i], type)
-
-      return issues.map(({path, ...rest}) => ({
-        path: [i, ...path],
-        ...rest,
-      }))
-    })
-    .filter((item) => item !== null)
-    .reduce((result, item) => result.concat(item), [])
+    const issues =  Shape.check.call(this, it, {shape});
 
     for (const prop of Object.getOwnPropertyNames(it)) {
       if (! shape.hasOwnProperty(prop)) {
@@ -974,6 +979,10 @@ export {TypedProps as Type, StrictTypedProps as StrictType}
 
 function isObject(value: any): value is {} {
   return value !== null && typeof value === 'object'
+}
+
+function isPlainObject(value: any): value is {} {
+  return value.constructor.toString() === Object.toString()
 }
 
 function isUndefined(value: any): value is void {
