@@ -13,6 +13,8 @@ Facebook's PropTypes-alike interface implementation for client and server, reusa
 and extensible. It produce error reports instead of throwing or printing into
 console. It works *without React*.
 
+[Gitter](https://gitter.im/TypedProps)
+
 ## Table of Contents
 
 - [Installation](#installation)
