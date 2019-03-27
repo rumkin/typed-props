@@ -14,12 +14,15 @@ import {
   check,
   getChecks,
   getRuleParams,
+  listRules,
   // Miscelaneous
   CHECK,
   CHECKS,
-} from './base';
+} from './base'
 
 export {
+  Checkable,
+  Rule,
   toInstance,
   toStatic,
   result,
@@ -27,28 +30,35 @@ export {
   args,
   getChecks,
   getRuleParams,
+  listRules,
   CHECK,
   CHECKS,
   CheckableType,
   RuleType,
-};
+}
 
-function skipUndefined(_target: Function, _prop: string, descriptor: PropertyDescriptor) {
-  const {value} = descriptor
-  descriptor.value = function(it: any, ...args) {
-    if (typeof it === 'undefined') {
-      return [];
-    }
-    else {
-      return value.call(this, it, ...args);
+function skip(test: (it: any) => boolean) {
+  return function (_target: Function, _prop: string, descriptor: PropertyDescriptor) {
+    const {value} = descriptor
+    descriptor.value = function(it: any, ...args) {
+      if (test(it) === true) {
+        return []
+      }
+      else {
+        return value.call(this, it, ...args)
+      }
     }
   }
+}
+
+function filterByRuleName(checks: Check[], rule: string): Check[] {
+  return checks.filter((item) => item.rule !== rule)
 }
 
 export class UniqRule extends Rule {
   static create(checks: Check[], params:Object): Check[] {
     return [
-      ...checks.filter(({rule}) => rule !== this.ruleName),
+      ...filterByRuleName(checks, this.ruleName),
       {
         rule: this.ruleName,
         params,
@@ -59,35 +69,37 @@ export class UniqRule extends Rule {
 }
 
 export class SimpleRule extends UniqRule {
-  static format(expect = true):object {
-    return {expect};
+  static config(expect = true):object {
+    return {expect}
   }
 
-  static check(it: any, {expect, ...rest}:{expect:boolean}, checker:CheckableType): Issue[] {
-    if (this.checkIt(it, rest, checker) === expect) {
-      return [];
+  static check(it: any, {expect, ...rest}:{expect:boolean}): Issue[] {
+    if (this.checkIt(it, rest) === expect) {
+      return []
     }
 
     return [{
       rule: this.ruleName,
       path: [],
       details: {
+        reason: 'mismatch',
         expect,
         is: !expect,
       },
-    }];
+    }]
   }
 
-  static checkIt(_it:any, _params: object, _checker:CheckableType):boolean {
-    return true;
+  /* istanbul ignore next */
+  static checkIt(_it:any, _params: object):boolean {
+    return true
   }
 }
 
 class IsRequired extends UniqRule {
-  static ruleName = 'isRequired';
+  static ruleName = 'isRequired'
 
-  static format(isRequired = true) {
-    return {isRequired};
+  static config(isRequired = true) {
+    return {isRequired}
   }
 
   static create(checks: Check[], params: object): Check[] {
@@ -107,331 +119,350 @@ class IsRequired extends UniqRule {
         rule: this.ruleName,
         path: [],
         details: {
-          accept: true,
+          reason: 'mismatch',
+          expect: true,
           is: false,
         },
-      }];
+      }]
     }
     else {
-      return [];
+      return []
     }
   }
 }
 
 class IsOptional extends UniqRule {
-  static ruleName = 'isRequired';
+  static ruleName = 'isRequired'
 
   static create(checks: Check[]): Check[] {
-    return checks.filter(
-      ({rule}) => rule !== this.ruleName
-    )
+    return filterByRuleName(checks, this.ruleName);
   }
 }
 
-class TypeOf extends UniqRule {
-  static propName = '';
-  static type = '';
+class OfType extends UniqRule {
+  static ruleName = 'type'
+  static typeName = ''
 
-  static format(isType = true) {
-    return {[this.propName]: isType};
+  static config(expect = true) {
+    return {type: this.typeName, expect}
   }
 
-  @skipUndefined
-  static check(it:any, params): Issue[] {
-    const result = [];
-    const shouldMatch = params[this.propName];
+  @skip(isUndefined)
+  static check(it:any, {type, expect}): Issue[] {
+    const result = []
 
-    if (! this.extraCheck(it) || (typeof it === this.type) !== shouldMatch) {
+    if (this.checkIt(it) !== expect) {
       result.push({
         rule: this.ruleName,
         path: [],
         details: {
-          accept: shouldMatch,
-          is: !shouldMatch,
+          reason: 'mismatch',
+          type: type,
+          expect,
+          is: !expect,
         },
-      });
+      })
     }
-    return result;
+    return result
   }
 
-  static extraCheck(_it: any): boolean {
-    return true;
-  }
-}
-
-class IsArray extends UniqRule {
-  static ruleName = 'array'
-
-  static format(isArray = true) {
-    return {isArray};
-  }
-  
-  @skipUndefined
-  static check(it:any, {isArray}): Issue[] {
-    const result = [];
-
-    if (Array.isArray(it) !== isArray) {
-      result.push({
-        rule: this.ruleName,
-        path: [],
-        details: {
-          accept: isArray,
-          is: !isArray,
-        },
-      });
-    }
-    return result;
+  /* istanbul ignore next */
+  static checkIt(_it: any): boolean {
+    return true
   }
 }
 
-class IsString extends TypeOf {
-  static ruleName = 'string'
-  static propName = 'isString'
-  static type = 'string'
-}
+class IsString extends OfType {
+  static typeName = 'string'
 
-class IsNumber extends TypeOf {
-  static ruleName = 'number'
-  static propName = 'isNumber'
-  static type = 'number'
-}
-
-class IsBoolean extends TypeOf {
-  static ruleName = 'bool'
-  static propName = 'isBoolean'
-  static type = 'boolean'
-}
-
-class IsFunc extends TypeOf {
-  static ruleName = 'func'
-  static propName = 'isFunction'
-  static type = 'function'
-}
-
-class IsSymbol extends TypeOf {
-  static ruleName = 'symbol'
-  static propName = 'isSymbol'
-  static type = 'symbol'
-}
-
-class IsObject extends TypeOf {
-  static ruleName = 'object'
-  static propName = 'isObject'
-  static type = 'object'
-  static extraCheck(value: any): boolean {
-    return value !== null;
+  static checkIt(it:any): boolean {
+    return typeof it === 'string'
   }
 }
 
+class IsNumber extends OfType {
+  static typeName = 'number'
+
+  static checkIt(it:any): boolean {
+    return typeof it === 'number'
+  }
+}
+
+class IsBoolean extends OfType {
+  static typeName = 'bool'
+
+  static checkIt(it:any): boolean {
+    return typeof it === 'boolean'
+  }
+}
+
+class IsFunc extends OfType {
+  static typeName = 'func'
+
+  static checkIt(it:any): boolean {
+    return typeof it === 'function'
+  }
+}
+
+class IsSymbol extends OfType {
+  static typeName = 'symbol'
+
+  static checkIt(it:any): boolean {
+    return typeof it === 'symbol'
+  }
+}
+
+class IsObject extends OfType {
+  static typeName = 'object'
+
+  static checkIt(it:any): boolean {
+    return typeof it === 'object' && it !== null
+  }
+}
+
+class IsArray extends OfType {
+  static typeName = 'array'
+
+  static checkIt(it: any): boolean {
+    return Array.isArray(it)
+  }
+}
+
+class Any extends Rule {
+  static ruleName = 'type'
+
+  static create(checks: Check[]): Check[] {
+    return filterByRuleName(checks, 'type')
+  }
+}
 
 class InstanceOf extends UniqRule {
   static ruleName = 'instanceOf'
 
-  static format(constructor: Function = Function) {
-    return {constructor};
+  static config(constructor: Function = Function) {
+    return {constructor}
   }
 
-  @skipUndefined
+  @skip(isUndefined)
   static check(it:any, {constructor}): Issue[] {
-    const result = [];
+    const result = []
     if (! isObject(it) || (it instanceof constructor === false)) {
       result.push({
         rule: this.ruleName,
         path: [],
         details: {
-          accept: constructor,
+          reason: 'mismatch',
+          expect: constructor,
           is: it.constructor,
         },
-      });
+      })
     }
-    return result;
+    return result
   }
 }
 
 class OneOf extends UniqRule {
   static ruleName = 'oneOf'
 
-  static format(values: Rule[]) {
-    return {values};
+  static config(values: Rule[]) {
+    return {values}
   }
 
-  @skipUndefined
+  @skip(isUndefined)
   static check(it:any, {values}): Issue[] {
-    const hasSome = values.some((value: any) => value === it);
+    const hasSome = values.some((value: any) => value === it)
 
-    const result = [];
+    const result = []
     if (! hasSome) {
       result.push({
         rule: this.ruleName,
         path: [],
         details: {
-          accept: {values},
+          reason: 'no_matches',
+          expect: {values},
           is: false,
         },
-      });
+      })
     }
-    return result;
+    return result
   }
 }
 
 class OneOfType extends UniqRule {
   static ruleName = 'oneOfType'
 
-  static format(types: Rule[]) {
-    return {types};
+  static config(types: Rule[]) {
+    return {types}
   }
 
-  @skipUndefined
+  @skip(isUndefined)
   static check(it:any, {types}): Issue[] {
     const hasSome = types.some((type: any) => {
-      const issues = check(it, type);
-      return issues.length === 0;
-    });
+      const issues = check(it, type)
+      return issues.length === 0
+    })
 
-    const result = [];
+    const result = []
     if (! hasSome) {
       result.push({
         rule: this.ruleName,
         path: [],
         details: {
-          accept: {types},
+          reason: 'no_matches',
+          expect: {types},
           is: false,
         },
-      });
+      })
     }
-    return result;
+    return result
   }
 }
 
 class ArrayOf extends UniqRule {
   static ruleName = 'arrayOf'
 
-  static format(type: Rule[]) {
-    return {type};
+  static config(type: Rule[]) {
+    return {type}
   }
 
-  @skipUndefined
-  static check(it:any, {type}): Issue[] {
-    if (! Array.isArray(it)) {
-      return [{
+  static create(checks:Check[], params:object): Check[] {
+    return [
+      ...IsArray.create(
+        filterByRuleName(checks, this.ruleName),
+        IsArray.config(true),
+      ),
+      {
         rule: this.ruleName,
-        path: [],
-        details: {
-          accept: [type],
-          isArray: false,
-        },
-      }];
-    }
+        params,
+        check: this.check.bind(this),
+      },
+    ]
+  }
 
+  @skip(isUndefined)
+  static check(it:any, {type}): Issue[] {
     return it.map((item, i) => {
-      const issues = check(item, type);
+      const issues = check(item, type)
 
       return issues.map(({path, ...rest}) => ({
         path: [i, ...path],
         ...rest,
-      }));
+      }))
     })
     .filter((item) => item !== null)
-    .reduce((result, item) => result.concat(item), []);
+    .reduce((result, item) => result.concat(item), [])
   }
 }
 
 class ObjectOf extends UniqRule {
   static ruleName = 'objectOf'
 
-  static format(type: Rule[]) {
-    return {type};
+  static config(type: Rule[]) {
+    return {type}
   }
 
-  @skipUndefined
-  static check(it:any, {type}): Issue[] {
-    if (! isObject(it) || ! isPlainObject(it)) {
-      return [{
+  static create(checks:Check[], params:object): Check[] {
+    return [
+      ...IsObject.create(
+        filterByRuleName(checks, this.ruleName),
+        IsObject.config(true),
+      ),
+      {
         rule: this.ruleName,
-        path: [],
-        details: {
-          reason: 'not_an_object'
-        },
-      }];
-    }
+        
+        params,
+        check: this.check.bind(this),
+      },
+    ]
+  }
 
+  @skip(isUndefined)
+  static check(it:any, {type}): Issue[] {
     return Object.entries(it).map(([i, item]) => {
-      const issues = check(item, type);
+      const issues = check(item, type)
 
       return issues.map(({path, ...rest}) => ({
         path: [i, ...path],
         ...rest,
-      }));
+      }))
     })
     .filter((item) => item !== null)
-    .reduce((result, item) => result.concat(item), []);
+    .reduce((result, item) => result.concat(item), [])
   }
 }
 
-type ShapeType = {[key:string]: Checkable};
+type ShapeType = {[key:string]: Checkable}
 
 class Shape extends UniqRule {
-  static ruleName = 'shape';
+  static ruleName = 'shape'
 
-  static format(shape: ShapeType): Object {
-    return {shape};
+  static config(shape: ShapeType): Object {
+    return {shape}
   }
 
-  @skipUndefined
-  static check(it:any, {shape}: {shape: ShapeType}): Issue[] {
-    if (! isObject(it) || ! isPlainObject(it)) {
-      return [{
+  static create(checks:Check[], params:object): Check[] {
+    return [
+      ...IsObject.create(
+        filterByRuleName(checks, this.ruleName),
+        IsObject.config(true),
+      ),
+      {
         rule: this.ruleName,
-        path: [],
-        details: {
-          reason: 'not_an_object'
-        },
-      }];
-    }
+        params,
+        check: this.check.bind(this),
+      },
+    ]
+  }
 
+  @skip(isUndefined)
+  static check(it:any, {shape}: {shape: ShapeType}): Issue[] {
     return Object.entries(shape).map(([i, type]) => {
-      const issues = check(it[i], type);
+      const issues = check(it[i], type)
 
       return issues.map(({path, ...rest}) => ({
         path: [i, ...path],
         ...rest,
-      }));
+      }))
     })
     .filter((item) => item !== null)
-    .reduce((result, item) => result.concat(item), []);
+    .reduce((result, item) => result.concat(item), [])
   }
 }
 
 class Exact extends UniqRule {
-  static ruleName = 'shape';
+  static ruleName = 'shape'
 
-  static format(shape: ShapeType): Object {
-    return {shape};
+  static config(shape: ShapeType): Object {
+    return {shape}
   }
 
-  @skipUndefined
-  static check(it:any, {shape}: {shape: ShapeType}): Issue[] {
-    if (! isObject(it) || ! isPlainObject(it)) {
-      return [{
+  static create(checks:Check[], params:object): Check[] {
+    return [
+      ...IsObject.create(
+        filterByRuleName(checks, this.ruleName),
+        IsObject.config(true),
+      ),
+      {
         rule: this.ruleName,
-        path: [],
-        details: {
-          reason: 'not_an_object'
-        },
-      }];
-    }
+        params,
+        check: this.check.bind(this),
+      },
+    ]
+  }
 
+  @skip(isUndefined)
+  static check(it:any, {shape}: {shape: ShapeType}): Issue[] {
     const issues =  Object.entries(shape)
     .map(([i, type]) => {
-      const issues = check(it[i], type);
+      const issues = check(it[i], type)
 
       return issues.map(({path, ...rest}) => ({
         path: [i, ...path],
         ...rest,
-      }));
+      }))
     })
     .filter((item) => item !== null)
-    .reduce((result, item) => result.concat(item), []);
+    .reduce((result, item) => result.concat(item), [])
 
     for (const prop of Object.getOwnPropertyNames(it)) {
       if (! shape.hasOwnProperty(prop)) {
@@ -439,106 +470,100 @@ class Exact extends UniqRule {
           rule: this.ruleName,
           path: [prop],
           details: {
-            reason: 'unwanted',
+            reason: 'redundant',
           },
-        });
+        })
       }
     }
 
-    return issues;
+    return issues
   }
 }
 
 class Select extends UniqRule {
-  static ruleName = 'select';
+  static ruleName = 'select'
 
-  static format(...args:any[]): Object {
-    const select = [];
-    let otherwise = false;
+  static config(...args:any[]): Object {
+    const select = []
 
     for (let i = 0; i < args.length; i++) {
-      const item = args[i];
-      if (Array.isArray(item)) {
-        if (typeof item[0] !== 'function') {
-          throw new Error(`Argument #${i + 1} first item isn't a function`);
-        }
-        else if (item[1] instanceof Checkable === false) {
-          throw new Error(`Argument #${i + 1} second item isn't a Rule`);
-        }
-        select.push(item);
+      const item = args[i]
+      if (! Array.isArray(item)) {
+        throw new TypeError(`Argument #${i + 1} not an array`)
       }
-      else if (i !== args.length - 1) {
-        throw new Error(`Invalid argument type #${i + 1}`);
+      else if (item.length !== 2) {
+        throw new TypeError(`Argument #${i + 1} bad length ${item.length}. Expect 2`)
       }
-      else {
-        otherwise = item;
+      else if (typeof item[0] !== 'function') {
+        throw new TypeError(`Argument #${i + 1} first item isn't a function`)
       }
+      else if (item[1] instanceof Checkable === false) {
+        throw new TypeError(`Argument #${i + 1} second item isn't a Rule`)
+      }
+      select.push(item)
     }
-    return {select, otherwise};
+
+    return {select}
   }
 
-  @skipUndefined
-  static check(it:any, {select, otherwise}): Issue[] {
+  @skip(isUndefined)
+  static check(it:any, {select}): Issue[] {
     for (let i = 0; i < select.length; i++) {
-      const item = select[i];
+      const item = select[i]
       if (Array.isArray(item)) {
-        const [match, type] = item;
+        const [match, type] = item
 
         if (match(it) === true) {
-          return check(it, type);
+          return check(it, type)
         }
       }
     }
     
-    if (otherwise) {
-      return [];
-    }
-
     return [{
       rule: this.ruleName,
       path: [],
       details: {
-        reason: 'otherwise'
+        reason: 'no_matches'
       },
-    }];
+    }]
   }
 }
 
-
-
+/* istanbul ignore next */
 class TypedProps extends Checkable {
   // Existence types
 
   static get any() {
-    return new this();
+    return new this()
   }
 
-  get any() {
-    return new (<any>this.constructor([...this.getChecks()]));
+  @toInstance(Any)
+  get any(): TypedProps {
+    return this
   }
 
   // Required
 
   @toStatic(IsRequired)
   static get isRequired(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsRequired)
   get isRequired(): TypedProps {
-    return this;
+    return this
   }
 
   // IsOptional
 
   @toStatic(IsOptional)
   static get optional(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsOptional)
   get optional(): TypedProps {
-    return this;
+    return this
   }
 
   // Basic types
@@ -547,190 +572,191 @@ class TypedProps extends Checkable {
 
   @toStatic(IsString)
   static get string(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsString)
   get string(): TypedProps {
-    return this;
+    return this
   }
 
   // Number
 
   @toStatic(IsNumber)
   static get number(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsNumber)
   get number(): TypedProps {
-    return this;
+    return this
   }
 
   // Boolean
 
   @toStatic(IsBoolean)
   static get bool(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsBoolean)
   get bool(): TypedProps {
-    return this;
+    return this
   }
 
   // Symbol
 
   @toStatic(IsSymbol)
   static get symbol(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsSymbol)
   get symbol(): TypedProps {
-    return this;
+    return this
   }
 
   // Function
 
   @toStatic(IsFunc)
   static get func(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsFunc)
   get func(): TypedProps {
-    return this;
+    return this
   }
 
   // Object
 
   @toStatic(IsObject)
   static get object(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsObject)
   get object(): TypedProps {
-    return this;
+    return this
   }
 
   // Array
 
   @toStatic(IsArray)
   static get array(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsArray)
   get array(): TypedProps {
-    return this;
+    return this
   }
 
   // InstanceOf
   
   @toStatic(InstanceOf)
   static instanceOf(_constructor: object): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(InstanceOf)
   instanceOf(_constructor: object): TypedProps {
-    return this;
+    return this
   }
 
   // OneOf
 
   @toStatic(OneOf)
   static oneOf(_types: object): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(OneOf)
   oneOf(_types: object): TypedProps {
-    return this;
+    return this
   }
 
   // ArrayOf
 
   @toStatic(ArrayOf)
   static arrayOf(_types: object): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(ArrayOf)
   arrayOf(_types: object): TypedProps {
-    return this;
+    return this
   }
 
   // ObjectOf
 
   @toStatic(ObjectOf)
   static objectOf(_types: object): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(ObjectOf)
   objectOf(_types: object): TypedProps {
-    return this;
+    return this
   }
 
   // OneOfType
 
   @toStatic(OneOfType)
   static oneOfType(_types: object): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(OneOfType)
   oneOfType(_types: object): TypedProps {
-    return this;
+    return this
   }
 
   // Shape
 
   @toStatic(Shape)
   static shape(_shape: ShapeType): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(Shape)
   shape(_shape: ShapeType): TypedProps {
-    return this;
+    return this
   }
 
   // Exact
 
   @toStatic(Exact)
   static exact(_shape: ShapeType): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(Exact)
   exact(_shape: ShapeType): TypedProps {
-    return this;
+    return this
   }
 
   // Select
 
   @toStatic(Select)
   static select(..._select: any[]): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(Select)
   select(..._select: any[]): TypedProps {
-    return this;
+    return this
   }
 }
 
 const strictOptions = {
-  defaultChecks: IsRequired.create([], IsRequired.format()),
-};
+  defaultChecks: IsRequired.create([], IsRequired.config()),
+}
 
+/* istanbul ignore next */
 class StrictTypedProps extends TypedProps {
-  constructor(checks: Check[] = IsRequired.create([], IsRequired.format())) {
-    super(checks);
+  constructor(checks: Check[] = IsRequired.create([], IsRequired.config())) {
+    super(checks)
   }
 
   // Basic types
@@ -739,173 +765,173 @@ class StrictTypedProps extends TypedProps {
 
   @toStatic(IsString, strictOptions)
   static get string(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsString)
   get string(): TypedProps {
-    return this;
+    return this
   }
 
   // Number
 
   @toStatic(IsNumber, strictOptions)
   static get number(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsNumber)
   get number(): TypedProps {
-    return this;
+    return this
   }
 
   // Boolean
 
   @toStatic(IsBoolean, strictOptions)
   static get bool(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsBoolean)
   get bool(): TypedProps {
-    return this;
+    return this
   }
 
   // Symbol
 
   @toStatic(IsSymbol, strictOptions)
   static get symbol(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsSymbol)
   get symbol(): TypedProps {
-    return this;
+    return this
   }
   // Function
 
   @toStatic(IsFunc, strictOptions)
   static get func(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsFunc)
   get func(): TypedProps {
-    return this;
+    return this
   }
 
   // Object
 
   @toStatic(IsObject, strictOptions)
   static get object(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsObject)
   get object(): TypedProps {
-    return this;
+    return this
   }
 
   // Array
 
   @toStatic(IsArray, strictOptions)
   static get array(): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(IsArray)
   get array(): TypedProps {
-    return this;
+    return this
   }
 
   // InstanceOf
   @toStatic(InstanceOf, strictOptions)
   static instanceOf(_constructor: object): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(InstanceOf)
   instanceOf(_constructor: object): TypedProps {
-    return this;
+    return this
   }
 
   // OneOf
 
   @toStatic(OneOf, strictOptions)
   static oneOf(_types: object): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(OneOf)
   oneOf(_types: object): TypedProps {
-    return this;
+    return this
   }
 
   // ArrayOf
 
   @toStatic(ArrayOf, strictOptions)
   static arrayOf(_types: object): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(ArrayOf)
   arrayOf(_types: object): TypedProps {
-    return this;
+    return this
   }
 
   // ObjectOf
 
   @toStatic(ObjectOf, strictOptions)
   static objectOf(_types: object): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(ObjectOf)
   objectOf(_types: object): TypedProps {
-    return this;
+    return this
   }
 
   // OneOfType
 
   @toStatic(OneOfType, strictOptions)
   static oneOfType(_types: object): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(OneOfType)
   oneOfType(_types: object): TypedProps {
-    return this;
+    return this
   }
 
   // Shape
 
   @toStatic(Shape, strictOptions)
   static shape(_shape: ShapeType): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(Shape)
   shape(_shape: ShapeType): TypedProps {
-    return this;
+    return this
   }
 
   @toStatic(Select, strictOptions)
   static select(..._select: any[]): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(Select)
   select(..._select: any[]): TypedProps {
-    return this;
+    return this
   }
 }
 
 export {TypedProps as Type, StrictTypedProps as StrictType}
 
 function isObject(value: any): value is {} {
-  return value !== null && typeof value === 'object';
+  return value !== null && typeof value === 'object'
 }
 
-function isPlainObject(value: any): value is Object {
-  return value.constructor.toString() === Object.toString();
+function isUndefined(value: any): value is void {
+  return typeof value === 'undefined'
 }

@@ -13,18 +13,21 @@
     "build:minify": "babel-minify dist/typed-props.js -o dist/typed-props.min.js",
     "build:checksum": "bash -c 'for file in $@; do echo `shasum -b -a 384 $file | xxd -r -p | base64` $file >> dist/checksum.txt; done' --",
     "clean": "rm -rf dist",
-    "test": "mocha test/index.js",
+    "cov": "nyc -t coverage --reporter=html mocha test",
+    "test": "mocha test",
     "prepublish": "npm run clean && npm run build"
   },
   "license": "MIT",
   "devDependencies": {
     "babel-minify": "^0.5.0",
     "mocha": "^6.0.2",
+    "nyc": "^13.3.0",
     "rollup": "^1.7.3",
     "should": "^11.2.1",
     "typescript": "^3.3.4000"
   },
   "directories": {
+    "example": "example",
     "test": "test"
   },
   "dependencies": {},

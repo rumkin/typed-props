@@ -1,7 +1,7 @@
 // const Types = require('typed-props');
 const {Type, UniqRule} = require('../');
 
-class UniqueItems extends UniqRule {
+class UniqItems extends UniqRule {
     static ruleName = 'uniqueItems';
 
     static format(key = 'id') {
@@ -38,13 +38,13 @@ class UniqueItems extends UniqRule {
 
 class MyType extends Type {
     static uniqueItems(...args) {
-        const checks = UniqueItems.create([], UniqueItems.format(...args))
+        const checks = UniqItems.create([], UniqItems.format(...args))
         
         return new this(checks);
     }
 
     uniqueItems(...args) {
-        const checks = UniqueItems.create(this.getChecks(), UniqueItems.format(...args))
+        const checks = UniqItems.create(this.getChecks(), UniqItems.format(...args))
         
         return new this.constructor(checks);
     }

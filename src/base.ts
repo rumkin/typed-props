@@ -1,23 +1,26 @@
-export const CHECKS = Symbol('checks');
-export const CHECK = Symbol('check');
+export const CHECKS = Symbol('checks')
+export const CHECK = Symbol('check')
 
 export type Check = {
   rule: string
   params: Object
-  check: (value:any, params: Object, self: CheckableType) => Issue[]
+  check: (value:any, params: Object) => Issue[]
 }
 
 export type Issue = {
   rule: string
   path: Array<string|number>
-  details: Object
+  details: {
+    reason: String
+    [key:string]: any
+  }
 }
 
 export type RuleType = {
   ruleName: string
   create: (checks: Check[], params: Object) => Check[]
-  format: (...args: any[]) => Object
-  check: (value: any, params: Object, checker: CheckableType) => Issue[]
+  config: (...args: any[]) => Object
+  check: (value: any, params: Object) => Issue[]
 }
 
 export type CheckableType = {
@@ -38,12 +41,14 @@ export class Rule {
     ]
   }
 
-  static format(..._args: any[]): Object {
+  /* istanbul ignore next */
+  static config(..._args: any[]): Object {
     return {}
   }
-
-  static check(_value: any, _params: object, _check: CheckableType): Issue[] {
-    return [];
+  
+  /* istanbul ignore next */
+  static check(_value: any, _params: object): Issue[] {
+    return []
   }
 }
 
@@ -57,88 +62,71 @@ export class CheckError extends TypeError {
 }
 
 export function check(it:any, checker:Checkable): Issue[] {
-  return checker[CHECK](it);
+  return checker[CHECK](it)
 }
 
 export class Checkable {
-  private [CHECKS]: Check[];
+  private [CHECKS]: Check[]
 
   constructor(checks: Check[] = []) {
     this[CHECKS] = checks
   }
 
-  static [CHECK](it: any, type: Checkable): Issue[] {
-    if (type instanceof Checkable === false) {
-      throw new Error('Type should be instance of Checkable');
-    }
-    
-    const checks = type[CHECKS];
-
-    for (const {params, check} of checks) {
-      const result = check(it, params, this);
-      if (result.length) {
-        return result;
-      }
-    }
-
-    return [];
-  }
-
   [CHECK](it: any): Issue[] {
-    const checks = this[CHECKS];
+    const checks = this[CHECKS]
 
     for (const {params, check} of checks) {
-      const result = check(it, params, this);
+      const result = check(it, params)
       if (result.length) {
-        return result;
+        return result
       }
     }
 
-    return [];
+    return []
   }
 
   getChecks(): Check[] {
-    return this[CHECKS];
+    return [...this[CHECKS]];
   }
 }
 
 export function args(...types: Checkable[]) {
-  return function(_proto:Function, _name:string, descriptor: PropertyDescriptor) {
+  return function(_proto:Function, name:string, descriptor: PropertyDescriptor) {
     if (typeof descriptor.value !== 'function') {
-      return;
+      throw new TypeError(`Decorated property "${name}" is not a function`);
     }
 
-    const origin = descriptor.value;
+    const origin = descriptor.value
 
-    descriptor.value = function(...args) {
-      const report = checkFunctionArgs(args, types);
+    descriptor.value = function(...args:any[]) {
+      const report = checkFunctionArgs(args, types)
 
       if (report.length) {
-        throw new CheckError('Bad arguments', report);
+        throw new CheckError('Bad arguments', report)
       }
 
-      return origin.call(this, ...args);
+      return origin.call(this, ...args)
     }
-  };
+  }
 }
 
 export function result(type: Checkable) {
-  return function(_proto:Function, _name:string, descriptor: PropertyDescriptor) {
+  return function(_proto:Function, name:string, descriptor: PropertyDescriptor) {
     if (typeof descriptor.value !== 'function') {
-      return;
+      throw new TypeError(`Decorated property "${name}" is not a function`);
     }
 
-    const origin = descriptor.value;
+    const origin = descriptor.value
 
     descriptor.value = function(...args) {
-      const result = origin.call(this, ...args);
+      const result = origin.call(this, ...args)
 
-      const report = type[CHECK](result);
+      const report = type[CHECK](result)
       if (report.length) {
-        throw new CheckError('Bad result type', report);
+        throw new CheckError('Bad result type', report)
       }
 
-      return result;
+      return result
     }
   }
 }
@@ -146,60 +134,60 @@ export function result(type: Checkable) {
 export function getRuleParams(type: Checkable, rule: string): Object|void {
   const check = type[CHECKS].find(
     (option: Check) => option.rule === rule
-  );
+  )
 
   if (check) {
-    return check.params;
+    return check.params
   }
 }
 
 export function getChecks(type: Checkable): Check[] {
-  return [...type[CHECKS]];
+  return [...type[CHECKS]]
 }
 
 export function listRules(type: Checkable): string[] {
-  return type[CHECKS].map(({rule}) => rule);
+  return type[CHECKS].map(({rule}) => rule)
 }
 
 function checkFunctionArgs(args:any[], types: Checkable[]) {
-  let report = [];
+  let report = []
 
   for (let i = 0; i < types.length; i++) {
-    const type = types[i];
+    const type = types[i]
 
     if (i === types.length - 1 && Array.isArray(type)) {
-      const issues = checkEach(args.slice(i), type[0]);
+      const issues = checkEach(args.slice(i), type[0])
 
       if (issues.length) {
         report = issues.map((item) => {
-          item.path[0] = item.path[0] + i;
-        });
-        break;
+          item.path[0] = <number>item.path[0] + i
+        })
+        break
       }
     }
     else {
-      const issues = check(args[i], type);
+      const issues = check(args[i], type)
 
       if (issues.length) {
-        report = issues;
-        break;
+        report = issues
+        break
       }
     }
   }
 
-  return report;
+  return report
 }
 
-function checkEach(args: any[], type: Checkable[]) {
+function checkEach(args: any[], type: Checkable[]): Issue[] {
   for (const arg of args) {
-    const issues = type[CHECK](arg);
+    const issues = type[CHECK](arg)
 
     if (issues.length) {
-      return issues;
+      return issues
     }
   }
 
-  return [];
+  return []
 }
 
 
@@ -208,20 +196,20 @@ export function toStatic(checkable: RuleType, {defaultChecks = []} = {}) {
     if (typeof descriptor.get === 'function') {
       descriptor.get = function() {
         const checks = checkable.create(defaultChecks,
-          checkable.format()
-        );
+          checkable.config()
+        )
   
-        return new this(checks);
-      };
+        return new this(checks)
+      }
     }
     else {
       descriptor.value = function(...args: any[]) {
         const checks = checkable.create(defaultChecks,
-          checkable.format(...args)
-        );
+          checkable.config(...args)
+        )
   
-        return new this(checks);
-      };
+        return new this(checks)
+      }
     }
   }
 }
@@ -232,19 +220,19 @@ export function toInstance(checkable: RuleType) {
       descriptor.get = function() {
 
         const checks = checkable.create(this[CHECKS],
-          checkable.format()
-        );
+          checkable.config()
+        )
   
-        return new this.constructor(checks);
-      };
+        return new this.constructor(checks)
+      }
     } else {
       descriptor.value = function(...args: any[]) {
         const checks = checkable.create(this[CHECKS],
-          checkable.format(...args)
-        );
+          checkable.config(...args)
+        )
   
-        return new this.constructor(checks);
-      };
+        return new this.constructor(checks)
+      }
     }
   }
 }

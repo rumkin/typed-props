@@ -29,20 +29,20 @@ Include scripts with integrity control:
 
 ```html
 <script
-    src="https://unpkg.com/typed-props@1.0.0/dist/typed-props.js"
-    integrity="sha384-vX4DUT67hQNkw4XIcpf6iIxnHODwPOMFr0nOwqoG3jT4VvDIJkUiOS2dyDF74+Lx"
-    crossorigin="anonymous"
+  src="https://unpkg.com/typed-props@1.0.0/dist/typed-props.js"
+  integrity="sha384-hbm/q7XnX7qFfJd65ngEixycDU6giD3iKHxd+QZhQ7Rplhyb2EeIY2eeM9QdKapw"
+  crossorigin="anonymous"
 ></script>
 <script
-    src="https://unpkg.com/typed-props@1.0.0/dist/typed-props.min.js"
-    integrity="sha384-lHI0VbpCk0gYdVHLMZjUQ+KKb0jB6NU8b60GOEopmKvbsTszXVlcYusMDXMOfi0b"
-    crossorigin="anonymous"
+  src="https://unpkg.com/typed-props@1.0.0/dist/typed-props.min.js"
+  integrity="sha384-011ydjnXoDmOVVG6kOxwy9V/684/SZZYa7QBcd2giaoMu74ijN3XaNacyEbDH8dZ"
+  crossorigin="anonymous"
 ></script>
 <script language="javascript">
-    const {Type} = TypedProps; // or window.TypedProps
+  const {Type} = TypedProps; // or window.TypedProps
 
-    const type = Type.number;
-    const issues = TypedProps.check(1, type);
+  const type = Type.number;
+  const issues = TypedProps.check(1, type);
 </script>
 ```
 

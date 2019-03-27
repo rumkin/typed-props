@@ -45,40 +45,90 @@ Custom types check:
 
 ```javascript
 
-import {Type, StrictType, check} from 'typed-props';
+import {Type, StrictType, check} from 'typed-props'
+
+const userType = Type.shape({
+  id: Type.number.isRequired,
+  name: Type.string.isRequired,
+})
+
+check({
+  id: '1',
+  name: null
+}, userType); // Produce an array of issues
 
 // Type behavs like Facebook's PropTypes, it requires isRequire to be set
 // to infiltrate undefined properties
-check(1, Type.number); // -> [] Valid
-check(undefined, Type.number); // -> [] Valid
+check(1, Type.number) // -> [] Valid
+check(undefined, Type.number) // -> [] Valid
 
-check(1, StrictType.number); // -> [] Valid
+check(1, StrictType.number) // -> [] Valid
 check(undefined, StrictType.number) // -> [Issue] Invalid
 
 // There is a way to make type defined as strict optional.
 check(undefined, StrictType.number.optional) // -> [] Valid
 
-check({count: 1}, Type.shape({count: Type.number}));
+check({count: 1}, Type.shape({count: Type.number}))
+```
+
+### Output
+
+Result of validation is an Array of Issues. Issue is an object which describes
+validator rules violation. 
+
+Issue typing:
+```typescript
+export type Issue = {
+  rule: string
+  path: Array<string|number>
+  details: {
+    reason: String
+    [key:string]: any
+  }
+}
+```
+
+Example:
+
+```javascript
+[
+  {
+    // Violated rule.
+    rule: 'type',
+    // Violation path. It helps to receive value in nested object.
+    path: ['user', 'messages', 0],
+    // Details explain what exactly goes wrong.
+    details: {
+      // Reason helps to identify kind of problem within one validator.
+      // Usual values are mismatch, no_matches, and redundant.
+      reason: 'mismatch',
+      // The next values are validator dependant.
+      type: 'string',
+      expect: true,
+      is: false,
+    }
+  }
+]
 ```
 
 __Experimental Features__. Decorators to check function arguments and return value:
 ```javascript
-import {StrictType as T, args, result} from 'typed-props';
+import {StrictType as T, args, result} from 'typed-props'
 
 class Arith {
-    // Fixed arguments length example
-    @args(T.number, T.number)
-    @result(T.number)
-    add(a, b) {
-        return a + b;
-    }
+  // Fixed arguments length example
+  @args(T.number, T.number)
+  @result(T.number)
+  add(a, b) {
+    return a + b
+  }
 
-    // Variadic argument's length example
-    @args(T.number, [T.number])
-    @result(T.number)
-    addAll(a = 0, ...numbers) {
-        return numbers.reduce((sum, b) => sum + b, a);
-    }
+  // Variadic argument's length example
+  @args(T.number, [T.number])
+  @result(T.number)
+  addAll(a = 0, ...numbers) {
+    return numbers.reduce((sum, b) => sum + b, a)
+  }
 }
 ```
 
@@ -90,53 +140,53 @@ class Arith {
 Standard checks are those which are provided by Facebook's PropTypes:
 
 ```javascript
-import {Type} from 'typed-props';
+import {Type} from 'typed-props'
 
 // Object which properties should pass all checks.
 const shape = Type.shape({
-    // Object type rules
+  // Object type rules
 
-    // Any value except of undefined
-    anything: Type.isRequired,
-    // Number property
-    number: Type.number,
-    // String property
-    string: Type.string,
-    // Boolean property
-    bool: Type.bool,
-    // Object property
-    object: Type.object,
-    // Array property
-    array: Type.array,
-    // Array property
-    func: Type.func,
-    // Symbol property
-    symbol: Type.symbol,
-    // Property which value is instance of Date
-    instanceOf: Type.instanceOf(Date),
+  // Any value except of undefined
+  anything: Type.isRequired,
+  // Number property
+  number: Type.number,
+  // String property
+  string: Type.string,
+  // Boolean property
+  bool: Type.bool,
+  // Object property
+  object: Type.object,
+  // Array property
+  array: Type.array,
+  // Array property
+  func: Type.func,
+  // Symbol property
+  symbol: Type.symbol,
+  // Property which value is instance of Date
+  instanceOf: Type.instanceOf(Date),
 
-    // Complex rules
+  // Complex rules
 
-    // One of check if value is in list of passed primitives
-    // It works like an enum
-    oneOf: ['one', 'two'],
-    // Check if all array values match the passed TypedProps
-    arrayOf: Type.number,
-    // Check if value is matched any of passed TypedProps.
-    oneOfType: Type.oneOfType([
-        Type.number,
-        Type.string,
-    ]),
-    // Check if all object properties passes the TypedProps.
-    objectOf: Type.objectOf(Type.number),
-    // Check shape has described properties and no other props.
-    exactShape: Type.exact({
-        id: Type.number,
-        name: Type.string,
-    }),
-});
+  // One of check if value is in list of passed primitives
+  // It works like an enum
+  oneOf: ['one', 'two'],
+  // Check if all array values match the passed TypedProps
+  arrayOf: Type.number,
+  // Check if value is matched any of passed TypedProps.
+  oneOfType: Type.oneOfType([
+    Type.number,
+    Type.string,
+  ]),
+  // Check if all object properties passes the TypedProps.
+  objectOf: Type.objectOf(Type.number),
+  // Check shape has described properties and no other props.
+  exactShape: Type.exact({
+    id: Type.number,
+    name: Type.string,
+  }),
+})
 
-const issues = check({}, shape); // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
+const issues = check({}, shape) // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
 ```
 
 Result of `check` call is array of [issues](#issue-type). If there is no issues, this array will be
@@ -158,10 +208,10 @@ it returns something truly. Then use it as type to check.
 
 ```javascript
 Type.select(
-    [(value) => (typeof value === 'string'), Type.string],
-    [(value) => (typeof value === 'number'), Type.number],
-    [() => true, Type.object]
-);
+  [(value) => (typeof value === 'string'), Type.string],
+  [(value) => (typeof value === 'number'), Type.number],
+  [() => true, Type.any] // Otherwise accept anything
+)
 ```
 
 ## Custom checks
@@ -172,29 +222,46 @@ repository examples directory.
 
 ```javascript
 class IsFinite extends SimpleRule {
-    static ruleName = 'isFinite';
+  static ruleName = 'isFinite'
 
-    static checkIt(it) {
-        return isFinite(it);
-    }
+  static checkIt(it) {
+    return isFinite(it)
+  }
 }
 
-class MyTypes extends Types {
-    static get isFinite() {
-        return new this([
-            IsFinite.create([], isFinite.format(true));
-        ]);
-    }
+class MyTypes extends Type {
+  static get isFinite() {
+    return new this([
+      IsFinite.create([], isFinite.config(true))
+    ])
+  }
 
-    get isFinite() {
-        return new this.constructor(
-            isFinite.create(
-                this.getChecks(),
-                isFinite.format(true),
-            )
+  get isFinite() {
+    return new this.constructor(
+      isFinite.create(
+        this.getChecks(),
+        isFinite.config(true),
+      )
+    )
+  }
+}
+// Mixin into TypedProps
+Object.defineProperty(Type, 'isFinite', {
+    get() {
+        return new this(
+            IsFinite.create([], IsFinite.config())
         )
-    }
-}
+    },
+})
+
+Object.define(Type.prototype, 'isFinite', {
+  get() {
+    const checks = IsFinite.create(
+      this.getChecks(), IsFinite.config()
+    )
+    return new this.constructor(checks)
+  },
+})
 ```
 
 ### Custom rule types
@@ -219,7 +286,7 @@ class IsArray extends SimpleRule {
     static ruleName = 'equals'
 
     static checkIt(it) {
-        return Array.isArray(it);
+        return Array.isArray(it)
     }
 }
 ```
@@ -266,7 +333,7 @@ Receive `rule` params by its' name.
 ```
 {
     ruleName: string
-    format: (...args[]) -> RuleParams
+    config: (...args[]) -> RuleParams
     create: (options:Array.<Check>, params:RuleParams) -> Array.<Check>
     check: (it:*, params:RuleParams, self:Checkable) -> Array.<Issue>
 }
@@ -274,7 +341,7 @@ Receive `rule` params by its' name.
 
 Rule is an object which contains several methods required for TypeProps to work:
 
-1. `format` transforms arguments of check call and transform it into
+1. `config` transforms arguments of check call and transform it into
     Rule dependant internal representation. This representation could be
     different for any rule.
 2. `create` adds new check into array of already existing checks. It can overwrite

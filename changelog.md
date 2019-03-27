@@ -11,6 +11,8 @@
         [({type}) => type === 'post', PostShape],
     )
     ```
+- Make type rules switch each other.
+
 ### v0.9
 
 - Code refactored.

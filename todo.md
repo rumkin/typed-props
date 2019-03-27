@@ -10,6 +10,11 @@
 ### v1.1
  
  - [ ] Inspect details.reason wider implementation.
+ - [ ] Add rule referrences to remove dependant rules on replace:
+    ```javascript
+    // Should throw or replace arrayOf
+    Type.arrayOf().number
+    ```
 
 ### v0.8
 
