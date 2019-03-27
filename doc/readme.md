@@ -45,3 +45,6 @@ Include scripts with integrity control:
     const issues = TypedProps.check(1, type);
 </script>
 ```
+
+Actual versions checksums could be found in
+[unpkg.com/typed-props@latest/dist/checcksum.txt](https://unpkg.com/typed-props@latest/dist/checksum.txt).
