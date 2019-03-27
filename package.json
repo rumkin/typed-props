@@ -11,7 +11,7 @@
     "build:compile": "tsc --module esnext --target esnext",
     "build:concat": "rollup dist/src/index.js --format umd --name TypedProps --file dist/typed-props.js",
     "build:minify": "babel-minify dist/typed-props.js -o dist/typed-props.min.js",
-    "build:shasum": "bash -c 'for file in $@; do echo `shasum -b -a 384 $file | xxd -r -p | base64` $file >> dist/checksum.txt; done' --",
+    "build:checksum": "bash -c 'for file in $@; do echo `shasum -b -a 384 $file | xxd -r -p | base64` $file >> dist/checksum.txt; done' --",
     "clean": "rm -rf dist",
     "test": "mocha test/index.js",
     "prepublish": "npm run clean && npm run build"
