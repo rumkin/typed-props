@@ -70,8 +70,6 @@ const data = {
 }
 
 const issues = check(data, type)
-typeof issues // Array
-issues.length // 1
 ```
 
 ### Output
@@ -176,7 +174,7 @@ const issues = check({}, shape) // => [{path:['anything'], rule: 'isRequired', d
 Result of `check` call is array of [issues](#issue-type). If there is no issues, this array will be
 empty.
 
-> ⚠️ Rules could not accept functions as arguments to override default dehaviour like PropTypes do.
+> ⚠️ If shape/exact rule property presented by function it should return type to check.
 
 ## Non-standard checks
 
@@ -231,6 +229,13 @@ Type.select(
   [() => true, Type.any] // Otherwise accept anything
 )
 ```
+
+### `Type.custom()`
+```
+(check:(it:*) -> bool) -> TypedProps
+```
+
+Custom check accepts `check` argument and use it to validate the value.
 
 ## Decorators
 
