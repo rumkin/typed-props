@@ -350,7 +350,7 @@ class IsArray extends SimpleRule {
 () -> Checks[]
 ```
 
-Returns a list of all defined checks from the current TypedProps instance.
+Returns a list of all defined checks from the TypedProps instance.
 
 ### `check()`
 ```text
