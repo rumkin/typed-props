@@ -30,19 +30,21 @@ Include scripts with integrity control:
 ```html
 <script
   src="https://unpkg.com/typed-props@1.0.0/dist/typed-props.js"
-  integrity="sha384-7N3rNUtixvrbG6X/cXidj53bPPuChpZpxNgvATKM+rFbYLwm0G31y1BengbXnJgU"
+  integrity="sha384-GlIQIsykUnZCr2koAs9hrk+hOPZaf6/46IqLb1dkuEeE3Ztf7jzMTqVWce7JcHjC"
   crossorigin="anonymous"
 ></script>
 <script
   src="https://unpkg.com/typed-props@1.0.0/dist/typed-props.min.js"
-  integrity="sha384-FwEugraEozRxGOGN21OEPMWIOQkO722hlnLDKcaxfxHK8UMBqfLOinVH2C5xMV15"
+  integrity="sha384-RxeNiFmGfqI7CsqvM0YvY81u6PyrMwBI4qlucXLV3yT4HdKDu3w6Wjh5P5bK4FdM"
   crossorigin="anonymous"
 ></script>
 <script language="javascript">
-  const {Type} = TypedProps; // or window.TypedProps
+  const {Type, check} = TypedProps // or window.TypedProps
 
-  const type = Type.number;
-  const issues = TypedProps.check(1, type);
+  const type = Type.number
+  const data = 1
+
+  const issues = check(data, type)
 </script>
 ```
 
