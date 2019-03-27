@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/typed-props.svg?style=flat-square)](https://npmjs.com/package/typed-props)
 [![Travis](https://img.shields.io/travis/rumkin/typed-props.svg?style=flat-square)](https://travis-ci.org/rumkin/typed-props)
 ![](https://img.shields.io/badge/coverage-100%25-green.svg?style=flat-square)
-![](https://img.shields.io/badge/size-11.8%20KiB-blue.svg?style=flat-square)
+![](https://img.shields.io/badge/size-12.6%20KiB-blue.svg?style=flat-square)
 ![](https://img.shields.io/badge/deps-0-blue.svg?style=flat-square)
 [![npm](https://img.shields.io/npm/dm/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
 
@@ -19,7 +19,8 @@ console. It works *without React*.
 - [Usage](#usage)
 - [Standard checks](#standard-checks)
 - [Non-standard checks](#non-standard-checks)
-- [Custom checks](#custom-checks)
+- [Checks and groups](#checks-and-groups)
+- [Extension](#extension)
 - [API](#api)
 - [License](#license)
 
@@ -45,11 +46,20 @@ Custom types check:
 
 ```javascript
 
-import {Type, StrictType, check} from 'typed-props'
+import {Type as T, StrictType as ST, check} from 'typed-props'
 
-const userType = Type.shape({
-  id: Type.number.isRequired,
-  name: Type.string.isRequired,
+const userType = T.shape({
+  id: T.number.isRequired,
+  name: T.string.isRequired,
+  email: T.string,
+}).isRequired
+
+// Or
+
+const userType = ST.shape({
+  id: ST.number,
+  name: ST.string,
+  email: ST.string.optional,
 })
 
 check({
@@ -82,7 +92,7 @@ export type Issue = {
   rule: string
   path: Array<string|number>
   details: {
-    reason: String
+    reason: string
     [key:string]: any
   }
 }
@@ -111,7 +121,7 @@ Example:
 ]
 ```
 
-__Experimental Features__. Decorators to check function arguments and return value:
+__Experimental Feature__. Decorators to check function arguments and returned value:
 ```javascript
 import {StrictType as T, args, result} from 'typed-props'
 
@@ -132,22 +142,21 @@ class Arith {
 }
 ```
 
-> _NOTE_! If invalid arguments passed, then an Error with type CheckError and property `issues`
-  will be thrown.
+> _NOTE_! Decorators throws CheckError with `issues` property.
 
 ## Standard checks
 
-Standard checks are those which are provided by Facebook's PropTypes:
+Standard checks provided by Facebook's PropTypes:
 
 ```javascript
 import {Type} from 'typed-props'
 
-// Object which properties should pass all checks.
+// Object properties should pass all checks.
 const shape = Type.shape({
-  // Object type rules
-
   // Any value except of undefined
   anything: Type.isRequired,
+  // Which is equivalent of
+  anythingElse: Type.any.isRequired,
   // Number property
   number: Type.number,
   // String property
@@ -184,6 +193,7 @@ const shape = Type.shape({
     id: Type.number,
     name: Type.string,
   }),
+  customType: Type.custom((value) => value > 0 && value < 100),
 })
 
 const issues = check({}, shape) // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
@@ -194,10 +204,18 @@ empty.
 
 ## Non-standard checks
 
-TypedProps have it's own custom checks which help in difficult cases like
-value-dependent type check:
+TypedProps have it's own custom checks which make it more handful.
 
-### `TypedProps.select()`
+### `Type.optional`
+
+This is pseudo check. This rule allows to make some property optional. It can
+switch off previously defined `.isRequired` check. It's better to use with `StrictType`.
+
+```javascript
+StrictType.number.optional
+```
+
+### `Type.select()`
 ```
 (...Function|TypedProps) -> TypedProps
 ```
@@ -214,11 +232,54 @@ Type.select(
 )
 ```
 
-## Custom checks
+## Checks and groups
 
-TypedProps support extension throught inheritance. So you can create use
-`extend` on Type class and add new rules. You will find more real example in
-repository examples directory.
+Currently there are several groups of checkers: existance, type and complex checks.
+
+* Existance:
+  * isRequired
+  * optional: removes isRequired
+* Type:
+  * bool
+  * number
+  * string
+  * func
+  * object
+  * array
+  * any: removes type rule
+* Complex:
+  * oneOf
+  * oneOfType
+  * arrayOf: overwirites type check with `array`
+  * objectOf: overwirites type check with `object`
+  * shape: replaces exact
+  * exact: replaces shape
+  * select
+  * custom
+
+Type and existance checks are switchable and can replace each other. It's made
+for flexibility.
+
+```javascript
+Type.isRequired.number.string.function // -> final check is "required function".
+```
+
+In the same time the complex checks like `shape` or `arrayOf` require the input value to has certain
+type object and array respectively. They will overwrite type checks too. But overwiting of complex types
+currently isn't possible because of unexpected behaviour. It could leads to runtime errors.
+So it strongly recommended not to overwrite such checks.
+
+It could be changed in the future.
+
+```javascript
+Type.arrayOf(Type.number).isRequired.number // Will throw an error in runtime
+```
+
+## Extension
+
+TypedProps support extension throught inheritance. So you can create new type using
+`extend` on Type class or mixing in new rules with `Object.defineProperty`.
+More real life example is in repository [examples](./examples) directory.
 
 ```javascript
 class IsFinite extends SimpleRule {
@@ -264,7 +325,7 @@ Object.define(Type.prototype, 'isFinite', {
 })
 ```
 
-### Custom rule types
+### Rule types
 
 There is several Rules which are using internally. 
 
@@ -341,29 +402,57 @@ Receive `rule` params by its' name.
 
 Rule is an object which contains several methods required for TypeProps to work:
 
-1. `config` transforms arguments of check call and transform it into
-    Rule dependant internal representation. This representation could be
-    different for any rule.
-2. `create` adds new check into array of already existing checks. It can overwrite
-    any rule defined earlier when it is necessary. Also it can modify a rule
-    defined previously. But in most cases it just remove previously defined rule
-    and push new one to the end.
-3. `check` get value and params and check that value is satisfy rule logic. If it's
-    not, then method returns list of found issues.
+#### `Rule.config()`
+```
+(...args:*) -> Object
+```
 
+Receives arguments from call and transform them to Rule internal representation.
+This representation could be different from rule to rule.
 
+#### `Rule.create()`
+```
+(checks:Check[], params:object) -> Checks[]
+```
+
+Adds new check into array of already existing checks. It can overwrite
+any rule defined earlier when it is necessary. Also it can modify a rule
+defined previously. But in most cases it just remove previously defined rule
+and push new one to the end.
+
+#### `Rule.check()`
+```
+CheckFunction
+```
+
+Receives `value` and checks that value is satisfying rule logic with `params`. If it's
+not, then method returns list of found issues.
 
 ### `Issue{}`
 ```text
 {
-    path: Array.<String|Number>
-    rule: String,
-    details: Object,
+  path: Array.<String|Number>
+  rule: String
+  details: Object
 }
+```
+
+### `Check{}`
+```
+{
+  rule: String,
+  params: Object
+  check: CheckFunction
+}
+```
+
+### `CheckFunction()`
+```
+(value:*, params:Object) -> Issue[]
 ```
 
 Object representing validation failure.
 
 ### License
 
-Copyright &copy; 2018, Rumkin. Released under [MIT License](LICENSE).
+Copyright &copy; 2018–2019, Rumkin. Released under [MIT License](LICENSE).
