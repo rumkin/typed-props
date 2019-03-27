@@ -86,14 +86,14 @@ export class Checkable {
   }
 
   getChecks(): Check[] {
-    return [...this[CHECKS]];
+    return [...this[CHECKS]]
   }
 }
 
 export function args(...types: Checkable[]) {
   return function(_proto:Function, name:string, descriptor: PropertyDescriptor) {
     if (typeof descriptor.value !== 'function') {
-      throw new TypeError(`Decorated property "${name}" is not a function`);
+      throw new TypeError(`Decorated property "${name}" is not a function`)
     }
 
     const origin = descriptor.value
@@ -113,7 +113,7 @@ export function args(...types: Checkable[]) {
 export function result(type: Checkable) {
   return function(_proto:Function, name:string, descriptor: PropertyDescriptor) {
     if (typeof descriptor.value !== 'function') {
-      throw new TypeError(`Decorated property "${name}" is not a function`);
+      throw new TypeError(`Decorated property "${name}" is not a function`)
     }
 
     const origin = descriptor.value

@@ -135,7 +135,7 @@ class IsOptional extends UniqRule {
   static ruleName = 'isRequired'
 
   static create(checks: Check[]): Check[] {
-    return filterByRuleName(checks, this.ruleName);
+    return filterByRuleName(checks, this.ruleName)
   }
 }
 
@@ -532,15 +532,15 @@ class Select extends UniqRule {
 class Custom extends UniqRule {
   static config(check: Function, ...args: any[]): object {
     if (typeof check !== 'function') {
-      throw new TypeError('Argument #1 is not a function');
+      throw new TypeError('Argument #1 is not a function')
     }
 
-    return {check, args};
+    return {check, args}
   }
 
   static check(it: any, {check, args}): Issue[] {
     if (check(it, ...args) === true) {
-      return [];
+      return []
     }
 
     return [{
@@ -549,7 +549,7 @@ class Custom extends UniqRule {
       details: {
         reason: 'mismatch',
       },
-    }];
+    }]
   }
 }
 
@@ -774,12 +774,12 @@ class TypedProps extends Checkable {
 
   @toStatic(Custom)
   static custom(_check: Function, ..._args: any[]): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(Custom)
   custom() {
-    return this;
+    return this
   }
 }
 
@@ -961,12 +961,12 @@ class StrictTypedProps extends TypedProps {
 
   @toStatic(Custom, strictOptions)
   static custom(_check: Function, ..._args: any[]): TypedProps {
-    return new this();
+    return new this()
   }
 
   @toInstance(Custom)
   custom() {
-    return this;
+    return this
   }
 }
 
