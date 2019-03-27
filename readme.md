@@ -252,7 +252,7 @@ Type and existance checks are switchable and can replace each other. It's made
 for flexibility.
 
 ```javascript
-Type.isRequired.number.string.function // -> final check is "required function".
+Type.isRequired.number.string.func // -> final check is "required function".
 ```
 
 In the same time the complex checks like `shape` or `arrayOf` require the input value to has certain
