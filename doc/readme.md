@@ -47,4 +47,4 @@ Include scripts with integrity control:
 ```
 
 Actual versions checksums could be found in
-[unpkg.com/typed-props@latest/dist/checcksum.txt](https://unpkg.com/typed-props@latest/dist/checksum.txt).
+[unpkg.com/typed-props@latest/dist/checksum.txt](https://unpkg.com/typed-props@latest/dist/checksum.txt).
