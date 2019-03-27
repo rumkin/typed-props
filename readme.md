@@ -48,7 +48,7 @@ Custom types check:
 
 import {Type as T, StrictType as ST, check} from 'typed-props'
 
-const userType = T.shape({
+const type = T.shape({
   id: T.number.isRequired,
   name: T.string.isRequired,
   email: T.string,
@@ -56,29 +56,20 @@ const userType = T.shape({
 
 // Or
 
-const userType = ST.shape({
+const type = ST.shape({
   id: ST.number,
   name: ST.string,
   email: ST.string.optional,
 })
 
-check({
+const data = {
   id: '1',
   name: null
-}, userType); // Produce an array of issues
+}
 
-// Type behavs like Facebook's PropTypes, it requires isRequire to be set
-// to infiltrate undefined properties
-check(1, Type.number) // -> [] Valid
-check(undefined, Type.number) // -> [] Valid
-
-check(1, StrictType.number) // -> [] Valid
-check(undefined, StrictType.number) // -> [Issue] Invalid
-
-// There is a way to make type defined as strict optional.
-check(undefined, StrictType.number.optional) // -> [] Valid
-
-check({count: 1}, Type.shape({count: Type.number}))
+const issues = check(data, type)
+typeof issues // Array
+issues.length // 1
 ```
 
 ### Output
