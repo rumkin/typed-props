@@ -7,7 +7,7 @@
 - [ ] Modern export interface.
 - [ ] Type names.
 
-### v1.1
+### v1.2
  
  - [ ] Select should accept plain object as shapes.
  - [ ] Add context to prevent circular structures failures.

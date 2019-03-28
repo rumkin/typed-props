@@ -177,6 +177,7 @@ Result of `check` call is array of [issues](#issue-type). If there is no issues,
 empty.
 
 > ⚠️ If shape/exact rule property presented by function it should return type to check.
+> ⚠️ .object will fail for arrays and vice versa.
 
 ## Non-standard checks
 

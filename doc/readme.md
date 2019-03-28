@@ -29,13 +29,13 @@ Include scripts with integrity control:
 
 ```html
 <script
-  src="https://unpkg.com/typed-props@1.0.0/dist/typed-props.js"
-  integrity="sha384-HJ1xePGzEGMbK5T23s6BURtTDxAQO1aCz8hy5nfKZdp2pbCRkfS2R6PnJ/x2FjK0"
+  src="https://unpkg.com/typed-props@1.1.0/dist/typed-props.js"
+  integrity="sha384-+d1JMFQ37qVx0tUTim1AXXpJzjmqxQ42sPyLjP62/gwNA4r7gpn0sgyXioBpc6oB "
   crossorigin="anonymous"
 ></script>
 <script
-  src="https://unpkg.com/typed-props@1.0.0/dist/typed-props.min.js"
-  integrity="sha384-FdEeyPF4FQcR+L8Fmt1AizWCb0wAdCUxpXoayeFsrTuCCvygKNTszGN8PLPzWGxu"
+  src="https://unpkg.com/typed-props@1.1.0/dist/typed-props.min.js"
+  integrity="sha384-kpCTRL1d5lWgQ+FLUjPhs7B2OL70TA8dyp0MAPQXoGvEj/ADXZqk0l0Y+V/vIUhe"
   crossorigin="anonymous"
 ></script>
 <script language="javascript">

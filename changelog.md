@@ -1,5 +1,10 @@
 # Changelog
 
+### v1.1
+
+- Rule IsObject produces issue for arrays.
+- Rule IsArray produces issue for objects.
+
 ### v1.0
 
 - Use classes for method and properties.
