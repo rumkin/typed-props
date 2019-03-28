@@ -1,6 +1,6 @@
 {
   "name": "typed-props",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Facebook's PropTypes standalone extensible implementation for browser and server",
   "main": "dist/node/index.js",
   "types": "dist/node/index.d.ts",
@@ -15,7 +15,7 @@
     "clean": "rm -rf dist",
     "cov": "nyc -t coverage --reporter=html mocha test",
     "test": "mocha test",
-    "prepublish": "allow-publish-tag next && npm run clean && npm run build"
+    "prepublish": "npm run clean && npm run build"
   },
   "license": "MIT",
   "devDependencies": {
