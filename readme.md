@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/typed-props.svg?style=flat-square)](https://npmjs.com/package/typed-props)
 [![Travis](https://img.shields.io/travis/rumkin/typed-props.svg?style=flat-square)](https://travis-ci.org/rumkin/typed-props)
 ![](https://img.shields.io/badge/coverage-100%25-green.svg?style=flat-square)
-![](https://img.shields.io/badge/size-12.60%20KiB-blue.svg?style=flat-square)
+![](https://img.shields.io/badge/size-13.0%20KiB-blue.svg?style=flat-square)
 ![](https://img.shields.io/badge/deps-0-blue.svg?style=flat-square)
 [![npm](https://img.shields.io/npm/dm/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
 
