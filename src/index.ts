@@ -216,7 +216,7 @@ class IsObject extends OfType {
   static typeName = 'object'
 
   static checkIt(it:any): boolean {
-    return typeof it === 'object' && it !== null
+    return typeof it === 'object' && it !== null && Array.isArray(it) === false;
   }
 }
 
@@ -416,20 +416,24 @@ class ObjectOf extends UniqRule {
   }
 }
 
-type ShapeType = {[key:string]: Checkable}
+type ShapeType = {[key:string]: Checkable}|Array<Checkable>;
 
 class Shape extends UniqRule {
   static ruleName = 'shape'
 
-  static config(shape: ShapeType): Object {
+  static config(shape: ShapeType): {shape:ShapeType} {
     return {shape}
   }
 
-  static create(checks:Check[], params:object): Check[] {
+  static create(checks:Check[], params:{shape: ShapeType}): Check[] {
+    const shapeRule = Array.isArray(params.shape)
+    ? IsArray
+    : IsObject;
+
     return [
-      ...IsObject.create(
+      ...shapeRule.create(
         filterByRuleName(checks, this.ruleName),
-        IsObject.config(true),
+        shapeRule.config(true),
       ),
       {
         rule: this.ruleName,
@@ -470,7 +474,7 @@ function shiftPath(key:string|number, {path, ...rest}: Issue): Issue {
 class Exact extends Shape {
   static ruleName = 'shape'
 
-  static config(shape: ShapeType): Object {
+  static config(shape: ShapeType): {shape: ShapeType} {
     return {shape}
   }
 

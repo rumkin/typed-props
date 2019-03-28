@@ -180,6 +180,18 @@ describe('TypedProps', function() {
         should(report[0].rule).be.equal('type')
         should(report[0].details.type).be.equal('object')
       })
+
+      it('Should not pass not an array', function() {
+        const value = []
+
+        const type = Type.object
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(1)
+        should(report[0].rule).be.equal('type')
+        should(report[0].details.type).be.equal('object')
+      })
     })
 
     describe('.array', function() {
@@ -203,8 +215,20 @@ describe('TypedProps', function() {
         should(report).has.lengthOf(0)
       })
 
-      it('Should not pass not array', function() {
+      it('Should not pass not an array', function() {
         const value = null
+
+        const type = Type.array
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(1)
+        should(report[0].rule).be.equal('type')
+        should(report[0].details.type).be.equal('array')
+      })
+
+      it('Should not pass an object', function() {
+        const value = {}
 
         const type = Type.array
 
@@ -572,6 +596,21 @@ describe('TypedProps', function() {
         should(report[0].details.type).be.equal('object')
       })
 
+      it('Should not treat an array as an object', function() {
+        const value = [0, 1];
+
+        const type = Type.shape({
+          0: Type.number,
+          1: Type.string,
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(1)
+        should(report[0].rule).be.equal('type')
+        should(report[0].details.type).be.equal('object')
+      })
+
       it('Should check an array', function() {
         const value = [null, null]
 
@@ -588,6 +627,21 @@ describe('TypedProps', function() {
 
         should(report[1].rule).be.equal('type')
         should(report[1].details.type).be.equal('string')
+      })
+
+      it('Should not treat an object as an array', function() {
+        const value = {0: 0, 1: '1'}
+
+        const type = Type.shape([
+          Type.number,
+          Type.string,
+        ])
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(1)
+        should(report[0].rule).be.equal('type')
+        should(report[0].details.type).be.equal('array')
       })
 
       it('Should not pass incorrect', function() {
