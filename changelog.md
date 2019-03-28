@@ -12,6 +12,8 @@
     )
     ```
 - Make type rules switch each other.
+- Add `optional`, `is` and `custom` checks.
+- Add strict type implementation.
 
 ### v0.9
 

@@ -9,6 +9,8 @@
 
 ### v1.1
  
+ - [ ] Select should accept plain object as shapes.
+ - [ ] Add context to prevent circular structures failures.
  - [ ] Inspect details.reason wider implementation.
  - [ ] Add rule referrences to remove dependant rules on replace:
     ```javascript

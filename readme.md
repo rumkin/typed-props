@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/typed-props.svg?style=flat-square)](https://npmjs.com/package/typed-props)
 [![Travis](https://img.shields.io/travis/rumkin/typed-props.svg?style=flat-square)](https://travis-ci.org/rumkin/typed-props)
 ![](https://img.shields.io/badge/coverage-100%25-green.svg?style=flat-square)
-![](https://img.shields.io/badge/size-12.6%20KiB-blue.svg?style=flat-square)
+![](https://img.shields.io/badge/size-12.60%20KiB-blue.svg?style=flat-square)
 ![](https://img.shields.io/badge/deps-0-blue.svg?style=flat-square)
 [![npm](https://img.shields.io/npm/dm/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
 
@@ -105,7 +105,7 @@ Example:
       // Reason helps to identify kind of problem within one validator.
       // Usual values are mismatch, no_matches, and redundant.
       reason: 'mismatch',
-      // The next values are validator dependant.
+      // The next values are validator dependent.
       type: 'string',
       expect: true,
       is: false,
@@ -117,7 +117,7 @@ Example:
 ## Examples
 
 * Create [UniqItems check](examples/uniq-items.js).
-* [Describe API](examples/api.js) with TypedProps (with circular references resolution).
+* [Describe API](examples/api.js) with TypedProps (with circular types resolution).
 
 ## Standard checks
 
@@ -185,7 +185,7 @@ Type.shape({
   // Make type optional
   optionalValue: Type.optional,
   // Determine type in runtime
-  propertyDependantType: Type.select(
+  propertyDependentType: Type.select(
     [
       ({type}) => type === 'ADD_TODO',
       Type.shape({/* ADD_TODO action payload shape */}),
@@ -206,7 +206,7 @@ Type.shape({
 
 TypedProps have it's own custom checks which make it more handful.
 
-### `Type.optional`
+### `Checkable.optional`
 
 This is pseudo check. This rule allows to make some property optional. It can
 switch off previously defined `.isRequired` check. It's better to use with `StrictType`.
@@ -215,9 +215,20 @@ switch off previously defined `.isRequired` check. It's better to use with `Stri
 StrictType.number.optional
 ```
 
-### `Type.select()`
+### `Checkable.is()`
 ```
-(...Function|TypedProps) -> TypedProps
+(value:*) -> Checkable
+```
+
+This check validates the checkable value to strict equal `value` argument.
+
+```javascript
+Type.is('user')
+```
+
+### `Checkable.select()`
+```
+(...Function|Checkable) -> Checkable
 ```
 
 This checker allow to dynamically switch between types depending on input value.
@@ -232,9 +243,9 @@ Type.select(
 )
 ```
 
-### `Type.custom()`
+### `Checkable.custom()`
 ```
-(check:(it:*) -> bool) -> TypedProps
+(check:(it:*) -> bool) -> Checkable
 ```
 
 Custom check accepts `check` argument and use it to validate the value.
@@ -267,7 +278,7 @@ class Arith {
 
 ## Checks and groups
 
-Currently there are several groups of checkers: existance, type and complex checks.
+Currently there are several groups of checkers: existence, type, exact, and complex checks.
 
 * Existance:
   * isRequired
@@ -279,9 +290,11 @@ Currently there are several groups of checkers: existance, type and complex chec
   * func
   * object
   * array
-  * any: removes type rule
-* Complex:
+  * any: removes any other type check
+* Exact:
+  * is
   * oneOf
+* Complex:
   * oneOfType
   * arrayOf: overwirites type check with `array`
   * objectOf: overwirites type check with `object`
@@ -290,7 +303,7 @@ Currently there are several groups of checkers: existance, type and complex chec
   * select
   * custom
 
-Type and existance checks are switchable and can replace each other. It's made
+Type and existence checks are switchable and can replace each other. It's made
 for flexibility.
 
 ```javascript
@@ -387,7 +400,11 @@ class IsArray extends SimpleRule {
 
 ## API
 
-### `TypedProps#getChecks()`
+### `Checkable()`
+
+Checkable is a prototype of TypeProps. It contains only check logic and has no own rules.
+
+### `Checkable#getChecks()`
 ```
 () -> Checks[]
 ```

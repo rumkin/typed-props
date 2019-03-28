@@ -30,12 +30,12 @@ Include scripts with integrity control:
 ```html
 <script
   src="https://unpkg.com/typed-props@1.0.0/dist/typed-props.js"
-  integrity="sha384-GlIQIsykUnZCr2koAs9hrk+hOPZaf6/46IqLb1dkuEeE3Ztf7jzMTqVWce7JcHjC"
+  integrity="sha384-HJ1xePGzEGMbK5T23s6BURtTDxAQO1aCz8hy5nfKZdp2pbCRkfS2R6PnJ/x2FjK0"
   crossorigin="anonymous"
 ></script>
 <script
   src="https://unpkg.com/typed-props@1.0.0/dist/typed-props.min.js"
-  integrity="sha384-RxeNiFmGfqI7CsqvM0YvY81u6PyrMwBI4qlucXLV3yT4HdKDu3w6Wjh5P5bK4FdM"
+  integrity="sha384-FdEeyPF4FQcR+L8Fmt1AizWCb0wAdCUxpXoayeFsrTuCCvygKNTszGN8PLPzWGxu"
   crossorigin="anonymous"
 ></script>
 <script language="javascript">
