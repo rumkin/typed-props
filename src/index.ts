@@ -261,10 +261,35 @@ class InstanceOf extends UniqRule {
   }
 }
 
+class Is extends UniqRule {
+  static ruleName = 'is'
+
+  static config(value: any) {
+    return {value}
+  }
+
+  @skip(isUndefined)
+  static check(it:any, {value}): Issue[] {
+    if (value === it) {
+      return []
+    }
+
+    return [{
+      rule: this.ruleName,
+      path: [],
+      details: {
+        reason: 'mismatch',
+        expect: value,
+        is: false,
+      },
+    }]
+  }
+}
+
 class OneOf extends UniqRule {
   static ruleName = 'oneOf'
 
-  static config(values: Rule[]) {
+  static config(values: any[]) {
     return {values}
   }
 
@@ -272,19 +297,19 @@ class OneOf extends UniqRule {
   static check(it:any, {values}): Issue[] {
     const hasSome = values.some((value: any) => value === it)
 
-    const result = []
-    if (! hasSome) {
-      result.push({
-        rule: this.ruleName,
-        path: [],
-        details: {
-          reason: 'no_matches',
-          expect: {values},
-          is: false,
-        },
-      })
+    if (hasSome) {
+      return []
     }
-    return result
+
+    return [{
+      rule: this.ruleName,
+      path: [],
+      details: {
+        reason: 'no_matches',
+        expect: {values},
+        is: false,
+      },
+    }]    
   }
 }
 
@@ -416,53 +441,37 @@ class Shape extends UniqRule {
 
   @skip(isUndefined)
   static check(it:any, {shape}: {shape: ShapeType}): Issue[] {
-    return Object.entries(shape).map(([i, type]) => {
-      if (isObject(type) && isPlainObject(type)) {
-        return this.check(it[i], {shape: <unknown>type as ShapeType})
-        .map(({path, ...rest}) => ({
-          path: [i, ...path],
-          ...rest,
-        }))
-      }
-      else {
-        let issues;
-        if (typeof type === 'function') {
-          issues = check(it[i], (<unknown>type as Function)())
-        }
-        else {
-          issues = check(it[i], type)
-        }
-  
-        return issues.map(({path, ...rest}) => ({
-          path: [i, ...path],
-          ...rest,
-        }))
-      }
-    })
-    .filter((item) => item !== null)
+    return Object.entries(shape)
+    .map(([key, type]) => this.checkProp(key, it[key], type).map((issue) => shiftPath(key, issue)))
     .reduce((result, item) => result.concat(item), [])
+  }
+
+  static checkProp(key: string|number, value: any, type: Checkable|ShapeType|Function) {
+    if (typeof type === 'function') {
+      type = (<unknown>type as Function)()
+    }
+
+    if (isObject(type) && isPlainObject(type)) {
+      return this.check(value, {shape: <unknown>type as ShapeType})
+    }
+    else {
+      return check(value, type)
+    }
   }
 }
 
-class Exact extends UniqRule {
+function shiftPath(key:string|number, {path, ...rest}: Issue): Issue {
+  return {
+    path: [key, ...path],
+    ...rest,
+  }
+}
+
+class Exact extends Shape {
   static ruleName = 'shape'
 
   static config(shape: ShapeType): Object {
     return {shape}
-  }
-
-  static create(checks:Check[], params:object): Check[] {
-    return [
-      ...IsObject.create(
-        filterByRuleName(checks, this.ruleName),
-        IsObject.config(true),
-      ),
-      {
-        rule: this.ruleName,
-        params,
-        check: this.check.bind(this),
-      },
-    ]
   }
 
   @skip(isUndefined)
@@ -692,6 +701,18 @@ class TypedProps extends Checkable {
   instanceOf(_constructor: object): TypedProps {
     return this
   }
+  
+  // OneOf
+
+  @toStatic(Is)
+  static is(_types: object): TypedProps {
+    return new this()
+  }
+
+  @toInstance(Is)
+  is(_types: object): TypedProps {
+    return this
+  }
 
   // OneOf
 
@@ -891,6 +912,18 @@ class StrictTypedProps extends TypedProps {
 
   @toInstance(InstanceOf)
   instanceOf(_constructor: object): TypedProps {
+    return this
+  }
+
+  // OneOf
+
+  @toStatic(Is, strictOptions)
+  static is(_types: object): TypedProps {
+    return new this()
+  }
+
+  @toInstance(Is)
+  is(_types: object): TypedProps {
     return this
   }
 

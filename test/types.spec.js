@@ -319,6 +319,39 @@ describe('TypedProps', function() {
   })
 
   describe('Complex checks', function() {
+    describe('.is()', function() {
+      it('Should pass correct', function() {
+        const value = 7
+
+        const type = Type.is(7)
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should pass undefined', function() {
+        const value = void 0
+
+        const type = Type.is(1)
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should not pass not object', function() {
+        const value = 7
+
+        const type = Type.is(1)
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(1)
+        should(report[0].rule).be.equal('is')
+      })
+    })
+
     describe('.oneOf()', function() {
       it('Should pass correct', function() {
         const value = 7
@@ -349,6 +382,46 @@ describe('TypedProps', function() {
 
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('oneOf')
+      })
+    })
+
+    describe('.oneOfType()', function() {
+      it('Should pass correct', function() {
+        const value = 'hello'
+
+        const type = Type.oneOfType([
+          Type.number,
+          Type.string,
+        ])
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should pass undefined', function() {
+        const value = void 0
+
+        const type = Type.oneOfType([])
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should not pass incorrect', function() {
+        const value = null
+
+        const type = Type.oneOfType([
+          Type.number,
+          Type.string,
+        ])
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(1)
+        should(report[0].path).be.deepEqual([])
+        should(report[0].rule).be.equal('oneOfType')
       })
     })
 
@@ -403,46 +476,6 @@ describe('TypedProps', function() {
         should(report[0].path).be.deepEqual([0])
         should(report[0].rule).be.equal('type')
         should(report[0].details.type).be.equal('number')
-      })
-    })
-
-    describe('.oneOfType()', function() {
-      it('Should pass correct', function() {
-        const value = 'hello'
-
-        const type = Type.oneOfType([
-          Type.number,
-          Type.string,
-        ])
-
-        const report = check(value, type)
-
-        should(report).has.lengthOf(0)
-      })
-
-      it('Should pass undefined', function() {
-        const value = void 0
-
-        const type = Type.oneOfType([])
-
-        const report = check(value, type)
-
-        should(report).has.lengthOf(0)
-      })
-
-      it('Should not pass incorrect', function() {
-        const value = null
-
-        const type = Type.oneOfType([
-          Type.number,
-          Type.string,
-        ])
-
-        const report = check(value, type)
-
-        should(report).has.lengthOf(1)
-        should(report[0].path).be.deepEqual([])
-        should(report[0].rule).be.equal('oneOfType')
       })
     })
 
@@ -978,6 +1011,16 @@ describe('TypedProps', function() {
       })
     })
 
+    describe('.is()', () => {
+      it('Should add isRequired by default', () => {
+        const type = StrictType.is()
+        const report = check(void 0, type)
+  
+        should(report).has.lengthOf(1)
+        should(report[0].rule).be.equal('isRequired')
+      })
+    })
+
     describe('.oneOf()', () => {
       it('Should add isRequired by default', () => {
         const type = StrictType.oneOf()
@@ -988,9 +1031,9 @@ describe('TypedProps', function() {
       })
     })
 
-    describe('.objectOf()', () => {
+    describe('.oneOfType()', () => {
       it('Should add isRequired by default', () => {
-        const type = StrictType.objectOf()
+        const type = StrictType.oneOfType()
         const report = check(void 0, type)
   
         should(report).has.lengthOf(1)
@@ -1008,9 +1051,9 @@ describe('TypedProps', function() {
       })
     })
 
-    describe('.oneOfType()', () => {
+    describe('.objectOf()', () => {
       it('Should add isRequired by default', () => {
-        const type = StrictType.oneOfType()
+        const type = StrictType.objectOf()
         const report = check(void 0, type)
   
         should(report).has.lengthOf(1)
