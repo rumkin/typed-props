@@ -5,21 +5,26 @@
 [![npm](https://img.shields.io/npm/v/typed-props.svg?style=flat-square)](https://npmjs.com/package/typed-props)
 [![Travis](https://img.shields.io/travis/rumkin/typed-props.svg?style=flat-square)](https://travis-ci.org/rumkin/typed-props)
 ![](https://img.shields.io/badge/coverage-100%25-green.svg?style=flat-square)
-![](https://img.shields.io/badge/size-8.25%20KiB-blue.svg?style=flat-square)
+![](https://img.shields.io/badge/size-13.0%20KiB-blue.svg?style=flat-square)
 ![](https://img.shields.io/badge/deps-0-blue.svg?style=flat-square)
 [![npm](https://img.shields.io/npm/dm/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
 
-Facebook's PropTypes interface implementation for client and server, reusable
+Facebook's PropTypes-alike interface implementation for client and server, reusable
 and extensible. It produce error reports instead of throwing or printing into
-console. It could work *without React*.
+console. It works *without React*.
+
+[Gitter](https://gitter.im/TypedProps)
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Usage](#usage)
-- [Standard checkers](#standard-checkers)
-- [Non-standard checkers](#non-standard-checkers)
-- [Custom checkers](#custom-checkers)
+- [Examples](#examples)
+- [Standard checks](#standard-checks)
+- [Non-standard checks](#non-standard-checks)
+- [Decorators](#decorators)
+- [Checks and groups](#checks-and-groups)
+- [Extension](#extension)
 - [API](#api)
 - [License](#license)
 
@@ -33,11 +38,11 @@ npm i typed-props
 Or via unpkg.com:
 
 ```html
-<script src="https://unpkg.com/typed-props@0/dist/typed-props.js"></script>
-<script src="https://unpkg.com/typed-props@0/dist/typed-props.min.js"></script>
+<script src="https://unpkg.com/typed-props@1/dist/typed-props.js"></script>
+<script src="https://unpkg.com/typed-props@1/dist/typed-props.min.js"></script>
 ```
 
-Complete [usage guide](doc).
+Complete [usage guide](https://github.com/rumkin/typed-props/tree/master/doc).
 
 ## Usage
 
@@ -45,96 +50,186 @@ Custom types check:
 
 ```javascript
 
-import Type, {check} from 'typed-props';
+import {Type as T, StrictType as ST, check} from 'typed-props'
 
-check(1, Type.number);
-check({count: 1}, Type.shape({count: Type.number}));
+const type = T.shape({
+  id: T.number.isRequired,
+  name: T.string.isRequired,
+  email: T.string,
+}).isRequired
+
+// Or
+
+const type = ST.shape({
+  id: ST.number,
+  name: ST.string,
+  email: ST.string.optional,
+})
+
+const data = {
+  id: '1',
+  name: null
+}
+
+const issues = check(data, type)
 ```
 
-__Experimental Features__. Decorators to check function arguments and return value:
-```javascript
-import Type, {args, result} from 'typed-props';
+### Output
 
-class Arith {
-    // Fixed arguments length example
-    @args(Type.number, Type.number)
-    @result(Type.number)
-    add(a, b) {
-        return a + b;
-    }
+Result of validation is an Array of Issues. Issue is an object which describes
+validator rules violation. 
 
-    // Variadic argument's length example
-    @args(Type.number, [Type.number])
-    @result(Type.number)
-    addAll(a = 0, ...numbers) {
-        return numbers.reduce((sum, b) => sum + b, a);
-    }
+Issue typing:
+```typescript
+export type Issue = {
+  rule: string
+  path: Array<string|number>
+  details: {
+    reason: string
+    [key:string]: any
+  }
 }
 ```
 
-> _NOTE_! If invalid arguments passed Error with type TypeError and property `issues`
-  will be thrown.
-
-## Standard checkers
-
-Standard checkers are those which are provided by Facebook's PropTypes:
+Example:
 
 ```javascript
-import Type from 'typed-props';
+[
+  {
+    // Violated rule.
+    rule: 'type',
+    // Violation path. It helps to receive value in nested object.
+    path: ['user', 'messages', 0],
+    // Details explain what exactly goes wrong.
+    details: {
+      // Reason helps to identify kind of problem within one validator.
+      // Usual values are mismatch, no_matches, and redundant.
+      reason: 'mismatch',
+      // The next values are validator dependent.
+      type: 'string',
+      expect: true,
+      is: false,
+    }
+  }
+]
+```
 
-// Object which properties should pass all checks.
+## Examples
+
+* Create [UniqItems check](examples/uniq-items.js).
+* [Describe API](examples/api.js) with TypedProps (with circular types resolution).
+
+## Standard checks
+
+Standard checks provided by Facebook's PropTypes:
+
+```javascript
+import {Type} from 'typed-props'
+
+// Object properties should pass all checks.
 const shape = Type.shape({
-    // Object type rules
+  // Any value except of undefined
+  anything: Type.isRequired,
+  // Which is equivalent of
+  anythingElse: Type.any.isRequired,
+  // Number property
+  number: Type.number,
+  // String property
+  string: Type.string,
+  // Boolean property
+  bool: Type.bool,
+  // Object property
+  object: Type.object,
+  // Array property
+  array: Type.array,
+  // Array property
+  func: Type.func,
+  // Symbol property
+  symbol: Type.symbol,
+  // Property which value is instance of Date
+  instanceOf: Type.instanceOf(Date),
 
-    // Any value except of undefined
-    anything: Type.isRequired,
-    // Number property
-    number: Type.number,
-    // String property
-    string: Type.string,
-    // Boolean property
-    bool: Type.bool,
-    // Object property
-    object: Type.object,
-    // Array property
-    array: Type.array,
-    // Array property
-    func: Type.func,
-    // Symbol property
-    symbol: Type.symbol,
-    // Property which value is instance of Date
-    instanceOf: Type.instanceOf(Date),
+  // Complex rules
 
-    // Complex rules
+  // One of check if value is in list of passed primitives
+  // It works like an enum
+  oneOf: ['one', 'two'],
+  // Check if all array values match the passed TypedProps
+  arrayOf: Type.number,
+  // Check if value is matched any of passed TypedProps.
+  oneOfType: Type.oneOfType([
+    Type.number,
+    Type.string,
+  ]),
+  // Check if all object properties passes the TypedProps.
+  objectOf: Type.objectOf(Type.number),
+  // Check shape has described properties and no other props.
+  exactShape: Type.exact({
+    id: Type.number,
+    name: Type.string,
+  }),
+})
 
-    // One of check if value is in list of passed primitives
-    // It works like an enum
-    oneOf: ['one', 'two'],
-    // Check if all array values match the passed TypedProps
-    arrayOf: Type.number,
-    // Check if value is matched any of passed TypedProps.
-    oneOfType: Type.oneOfType([
-        Type.number,
-        Type.string,
-    ]),
-    // Check if all object properties passes the TypedProps.
-    objectOf: Type.objectOf(Type.number),
-});
-
-const issues = Type.check({}, shape); // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
+const issues = check({}, shape) // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
 ```
 
 Result of `check` call is array of [issues](#issue-type). If there is no issues, this array will be
 empty.
 
-## Non-standard checkers
+> ⚠️ If shape/exact rule property presented by function it should return type to check.
+> ⚠️ .object will fail for arrays and vice versa.
 
-TypedProps have it's own custom checkers which help in difficult cases like
-value-dependent type check:
+## Non-standard checks
 
-### `TypedProps.select()`
+```javascript
+Type.shape({
+  // Make type optional
+  optionalValue: Type.optional,
+  // Determine type in runtime
+  propertyDependentType: Type.select(
+    [
+      ({type}) => type === 'ADD_TODO',
+      Type.shape({/* ADD_TODO action payload shape */}),
+    ],
+    [
+      ({type}) => type === 'SET_COMPLETED',
+      Type.shape({/* SET_COMPLETED action payload shape */}),
+    ],
+    [
+      () => true,
+      Type.any
+    ],
+  ),
+  // Create custom checks when TypedProps is not enough.
+  customValue: Type.custom((value) => value === Math.PI),
+})
 ```
-(...Function|TypedProps) -> TypedProps
+
+TypedProps have it's own custom checks which make it more handful.
+
+### `Checkable.optional`
+
+This is pseudo check. This rule allows to make some property optional. It can
+switch off previously defined `.isRequired` check. It's better to use with `StrictType`.
+
+```javascript
+StrictType.number.optional
+```
+
+### `Checkable.is()`
+```
+(value:*) -> Checkable
+```
+
+This check validates the checkable value to strict equal `value` argument.
+
+```javascript
+Type.is('user')
+```
+
+### `Checkable.select()`
+```
+(...Function|Checkable) -> Checkable
 ```
 
 This checker allow to dynamically switch between types depending on input value.
@@ -143,140 +238,272 @@ it returns something truly. Then use it as type to check.
 
 ```javascript
 Type.select(
-    (value) => (typeof value === 'string') && Type.string,
-    (value) => (typeof value === 'number') && Type.number,
-    Type.object
-);
+  [(value) => (typeof value === 'string'), Type.string],
+  [(value) => (typeof value === 'number'), Type.number],
+  [() => true, Type.any] // Otherwise accept anything
+)
 ```
 
-## Custom checkers
+### `Checkable.custom()`
+```
+(check:(it:*) -> bool) -> Checkable
+```
 
-TypedProps could be inherited or extended with new rules.
+Custom check accepts `check` argument and use it to validate the value.
+
+## Decorators
+
+__Experimental Feature__. Decorators can check function arguments and value it returns in runtime.
+
+> ⚠️ Decorators throw CheckError with `issues` property.
 
 ```javascript
-// Extend Type with custom checker.
-Type.addProperty('infinity', (value) => {
-    if (value === undefined) { // Skip empty values
-        return;
+import {StrictType as T, args, result} from 'typed-props'
+
+class Arith {
+  // Fixed arguments length example
+  @args(T.number, T.number)
+  @result(T.number)
+  add(a, b) {
+    return a + b
+  }
+
+  // Variadic argument's length example
+  @args(T.number, [T.number])
+  @result(T.number)
+  addAll(a = 0, ...numbers) {
+    return numbers.reduce((sum, b) => sum + b, a)
+  }
+}
+```
+
+## Checks and groups
+
+Currently there are several groups of checkers: existence, type, exact, and complex checks.
+
+* Existance:
+  * isRequired
+  * optional: removes isRequired
+* Type:
+  * bool
+  * number
+  * string
+  * func
+  * object
+  * array
+  * any: removes any other type check
+* Exact:
+  * is
+  * oneOf
+* Complex:
+  * oneOfType
+  * arrayOf: overwirites type check with `array`
+  * objectOf: overwirites type check with `object`
+  * shape: replaces exact
+  * exact: replaces shape
+  * select
+  * custom
+
+Type and existence checks are switchable and can replace each other. It's made
+for flexibility.
+
+```javascript
+Type.isRequired.number.string.func // -> final check is "required function".
+```
+
+In the same time the complex checks like `shape` or `arrayOf` require the input value to has certain
+type object and array respectively. They will overwrite type checks too. But overwiting of complex types
+currently isn't possible because of unexpected behaviour. It could leads to runtime errors.
+So it strongly recommended not to overwrite such checks.
+
+It could be changed in the future.
+
+```javascript
+Type.arrayOf(Type.number).isRequired.number // Will throw an error in runtime
+```
+
+## Extension
+
+TypedProps support extension throught inheritance. So you can create new type using
+`extend` on Type class or mixing in new rules with `Object.defineProperty`.
+More real life example is in repository [examples](./examples) directory.
+
+```javascript
+class IsFinite extends SimpleRule {
+  static ruleName = 'isFinite'
+
+  static checkIt(it) {
+    return isFinite(it)
+  }
+}
+
+class MyTypes extends Type {
+  static get isFinite() {
+    return new this([
+      IsFinite.create([], isFinite.config(true))
+    ])
+  }
+
+  get isFinite() {
+    return new this.constructor(
+      isFinite.create(
+        this.getChecks(),
+        isFinite.config(true),
+      )
+    )
+  }
+}
+// Mixin into TypedProps
+Object.defineProperty(Type, 'isFinite', {
+    get() {
+        return new this(
+            IsFinite.create([], IsFinite.config())
+        )
+    },
+})
+
+Object.define(Type.prototype, 'isFinite', {
+  get() {
+    const checks = IsFinite.create(
+      this.getChecks(), IsFinite.config()
+    )
+    return new this.constructor(checks)
+  },
+})
+```
+
+### Rule types
+
+There is several Rules which are using internally. 
+
+#### UniqRule
+
+This is probably the most useful type. This rule overwrites any other
+occurencies of the rule in type's rules array. It defines it's own
+`create` method which shouldn't be overriden by custom implementation. Mostly
+because it senseless.
+
+#### SimpleRule
+
+This rule extends `UniqRule` and define it's own `check` method which take all
+work by creating non-check logic (issue createsion, result comparision). It
+requires `ckeckIt` method wich should return `boolean` value.
+
+```javascript
+class IsArray extends SimpleRule {
+    static ruleName = 'isArray'
+
+    static checkIt(it) {
+        return Array.isArray(it)
     }
-
-    return value === Infinity;
-});
-
-// Inherit Type in new class
-class MyType extends Type {}
-
-MyType.addMethod('equals', (value, needle) => {
-    if (value === undefined) {
-        return;
-    }
-
-    return value === needle;
-});
-
-// Any Type' ancestor should be validated by Type
-Type.check(5, MyType.equals(5)); // -> []
-MyType.check(5, MyType.equals(5)); // -> []
-
-// MyType uses Type's checker `infinity`
-Type.check(Infinity, MyType.infinity); // -> []
+}
 ```
 
 ## API
 
-### `TypedProps.check()`
+### `Checkable()`
+
+Checkable is a prototype of TypeProps. It contains only check logic and has no own rules.
+
+### `Checkable#getChecks()`
+```
+() -> Checks[]
+```
+
+Returns a list of all defined checks from the TypedProps instance.
+
+### `check()`
 ```text
-(value:*, type:TypedProps) -> Array.<Issue>
+(value:*, type:Checkable) -> Array.<Issue>
 ```
 
-Validate `value` to satisfy `type` requirements. Always produce an Array.
+Validate `value` to satisfy `type` requirements. Always produce an Array of Issues.
 
-### `TypedProps.addMethod()`
-```text
-(name:String, [transform:TransformFunc,] checker:CheckerFunc) -> void
-```
-
-* `name` - New TypedProps property name.
-* `transform` - Function that transform params before they got into checker. It works once when type is configuring.
-* `checker` - Checker function.
-
-Add new checker which receive params. This method can receive `transform` function
-which will convert checker call arguments into internal representation.
-
-##### Example
-```javascript
-// Define checker
-Type.addMethod('isFinite', (value, expect) => {
-    return isFinite(value) === expect;
-});
-// ... or with transform param
-Type.addMethod('isFinite', (expect = true) => ({expect}), (value, {expect}) => {
-    return isFinite(value) === expect;
-});
-
-// Use it
-const type = TypedProps.isRequired.number.isFinite(true);
-```
-
-### `TypedProps.addProperty()`
-```text
-(name:String, checker:CheckerFunc) -> void
-```
-* `name` - New TypedProps property name.
-* `checker` - Checker function.
-
-Define checker which has no parameters.
-
-##### Example
-```javascript
-// Define checker
-Type.addProperty('isFinite', (value) => {
-    return isFinite(value) === true;
-});
-
-// Use it
-const type = Type.isRequired.number.isFinite;
-```
-
-### `TypedProps.getCheck()`
+### `getRuleParams()`
 
 ```text
 (type:TypedProps, name:string) -> null|*[]
 ```
 
 * `type` - Target type.
-* `name` - Checker name.
-* `=` Returns array of checker arguments or null if checker is not found.
+* `name` - Rule name.
+* `=` Returns check params object or null if rule isn't found.
 
 
-### `CheckerFunc` Type
-```text
-(value:*, ...params:*) -> Boolean|Issue|Array.<Issue>|void
+Receive `rule` params by its' name.
+
+### `listRules()`
+
+```
+(type:TypedProps) -> string[]
 ```
 
-Checker function is calling from TypedProps to verify value. This function should
-return boolean value, Issue or array of Issue objects.
+* `type` - Target type.
+* `=` Returns list of rule name in order they were defined.
 
-> Usually checker function should not check undefined value.
-
-### `TransformFunc` Type
-```text
-(params:...*) -> Object
+### `Rule{}`
+```
+{
+    ruleName: string
+    config: (...args[]) -> RuleParams
+    create: (options:Array.<Check>, params:RuleParams) -> Array.<Check>
+    check: (it:*, params:RuleParams, self:Checkable) -> Array.<Issue>
+}
 ```
 
-Transform function receive arguments passed to checker method call and convert it into object.
+Rule is an object which contains several methods required for TypeProps to work:
 
-### `Issue` Type
+#### `Rule.config()`
+```
+(...args:*) -> Object
+```
+
+Receives arguments from call and transform them to Rule internal representation.
+This representation could be different from rule to rule.
+
+#### `Rule.create()`
+```
+(checks:Check[], params:object) -> Checks[]
+```
+
+Adds new check into array of already existing checks. It can overwrite
+any rule defined earlier when it is necessary. Also it can modify a rule
+defined previously. But in most cases it just remove previously defined rule
+and push new one to the end.
+
+#### `Rule.check()`
+```
+CheckFunction
+```
+
+Receives `value` and checks that value is satisfying rule logic with `params`. If it's
+not, then method returns list of found issues.
+
+### `Issue{}`
 ```text
 {
-    path: Array.<String|Number>
-    rule: String,
-    details: Object,
+  path: Array.<String|Number>
+  rule: String
+  details: Object
 }
+```
+
+### `Check{}`
+```
+{
+  rule: String,
+  params: Object
+  check: CheckFunction
+}
+```
+
+### `CheckFunction()`
+```
+(value:*, params:Object) -> Issue[]
 ```
 
 Object representing validation failure.
 
 ### License
 
-Copyright &copy; 2018, Rumkin. Released under [MIT License](LICENSE).
+Copyright &copy; 2018–2019, Rumkin. Released under [MIT License](LICENSE).

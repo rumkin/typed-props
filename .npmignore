@@ -2,6 +2,7 @@ var/
 tmp/
 example/
 coverage/
+local/
 
 .dockerignore
 .editorconfig
@@ -10,3 +11,4 @@ coverage/
 bake.sh
 Dockerfile
 todo.md
+tsconfig.json

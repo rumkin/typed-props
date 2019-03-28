@@ -6,7 +6,7 @@ npm-debug.log
 
 **/.DS_Store
 
-tmp
-local
-build
-dist
+tmp/
+local/
+build/
+dist/

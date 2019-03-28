@@ -7,20 +7,17 @@
 - [ ] Modern export interface.
 - [ ] Type names.
 
-### v0.9
-
-- [x] Code refactored.
-- [x] Decorators:
-    - [x] Function arguments decorator.
-    - [x] Function return value decorator.
-- [x] Add `select` checker which can determine what rules to use:
+### v1.2
+ 
+ - [ ] Select should accept plain object as shapes.
+ - [ ] Add context to prevent circular structures failures.
+ - [ ] Inspect details.reason wider implementation:
+    - reason is a rule branches.
+    - reason is a code, not a message.
+ - [ ] Add rule referrences to remove dependant rules on replace:
     ```javascript
-    // Select type by value's `type` property.
-    Type.select(
-        ({type}) => type === 'user' && userShape,
-        ({type}) => type === 'file' && fileShape,
-        () => linkShape, // otherwise
-    );
+    // Should throw or replace arrayOf
+    Type.arrayOf().number
     ```
 
 ### v0.8

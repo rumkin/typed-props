@@ -1,122 +1,140 @@
-const should = require('should');
-const T = require('..');
+/* global describe */
+/* global it */
+
+const should = require('should')
+const {Type, ...T} = require('..')
 
 describe('decorators', function(){
-    describe('TypedProps.args()', function() {
-        it('Should return function', function() {
-            const f = T.args();
+  describe('TypedProps.args()', function() {
+    it('Should return function', function() {
+      const f = T.args()
 
-            should(f).be.a.Function();
-        });
+      should(f).be.a.Function()
+    })
 
-        it('Returned function should return descriptor', function() {
-            const f = T.args();
+    it('Returned function should replace descriptor.value', function() {
+      const f = T.args()
 
-            const descriptor = f(null, 'test', {
-                value: function() {},
-            });
+      const value = function() {}
+      const descriptor = {value}
+      
+      f(null, 'test', descriptor)
 
-            should(descriptor).be.an.Object();
-            should(descriptor).hasOwnProperty('value')
-            .which.is.a.Function();
-        });
+      should(descriptor).be.an.Object()
+      should(descriptor).hasOwnProperty('value')
+      .which.is.a.Function()
+      .and.not.equal(value) 
+    })
 
-        it('Descriptor should provider wrapper function', function() {
-            const f = T.args();
+    it('Should throw if descriptor.value is not a function', function() {
+      const decorate = T.args()
+      
+      should.throws(
+        () => decorate(null, 'test', {}),
+        TypeError,
+        'Decorated property "test" is not a function'
+      )
+    })
 
-            const descriptor = f(null, 'test', {
-                value: function() {},
-            });
+    it('Descriptor should provide wrapper function', function() {
+      const f = T.args()
 
-            should(descriptor).be.an.Object();
-            should(descriptor).hasOwnProperty('value')
-            .which.is.a.Function();
-        });
+      const descriptor = {value() {}}
+      f(null, 'test', descriptor)
 
-        it('Wrapper function should pass arguments', function() {
-            const f = T.args();
+      should(descriptor).be.an.Object()
+      should(descriptor).hasOwnProperty('value')
+      .which.is.a.Function()
+    })
 
-            const {value} = f(null, 'test', {
-                value: function(a) {
-                    return a;
-                },
-            });
+    it('Wrapper function should pass arguments', function() {
+      const f = T.args()
 
-            should(value).be.a.Function();
-            should(value(1)).be.equal(1);
-        });
+      const value = function(v) {
+        return v
+      }
+      const descriptor = {value}
+      
+      f(null, 'test', descriptor)
 
-        it('Wrapper function check arguments', function() {
-            const f = T.args(
-                T.number
-            );
+      should(descriptor.value).be.a.Function()
+      should(descriptor.value(1)).be.equal(1)
+    })
 
-            const {value} = f(null, 'test', {
-                value: function(a) {
-                    return a;
-                },
-            });
+    it('Should check arguments', function() {
+      const decorate = T.args(
+        Type.number
+      )
 
-            should.throws(() => value(null), TypeError, /argument types/);
-            should.doesNotThrow(() => value(1), TypeError, /argument types/);
-        });
+      const descriptor = {value(){}}
+      
+      decorate(null, 'test', descriptor)
+      descriptor.value(1)
+      should.throws(() => descriptor.value(null), TypeError, /argument types/)
+      should.doesNotThrow(() => descriptor.value(1), TypeError, /argument types/)
+    })
 
-        it('Wrapper function check variadic arguments', function() {
-            const f = T.args(T.string, [T.number]);
+    it('Wrapper function check variadic arguments', function() {
+      const decorate = T.args(Type.string, [Type.number])
 
-            const {value} = f(null, 'test', {
-                value: function(a) {
-                    return a;
-                },
-            });
+      const descriptor = {value(){}}
+      
+      decorate(null, 'test', descriptor)
 
-            should.doesNotThrow(
-                () => value('hello', 1), TypeError, /argument types/
-            );
-            should.throws(
-                () => value('hello', 1, null), TypeError, /argument types/
-            );
-        });
+      should.doesNotThrow(
+        () => descriptor.value('hello', 1), TypeError, /argument types/
+      )
+      should.throws(
+        () => descriptor.value('hello', 1, null), TypeError, /argument types/
+      )
+    })
 
-        it('Should not affect default values', function() {
-            const f = T.args(T.number, [T.number]);
+    it('Should not affect default values', function() {
+      const decorate = T.args(Type.number, [Type.number])
 
-            const {value} = f(null, 'test', {
-                value: function(a = 1, ...numbers) {
-                    return numbers.reduce((sum, b) => sum + b, a);
-                },
-            });
+      const value = (a = 1, ...numbers) => {
+        return numbers.reduce((sum, b) => sum + b, a)
+      }
+      const descriptor = {value}
+      decorate(null, 'test', descriptor)
 
-            should.doesNotThrow(
-                () => value(), TypeError, /argument types/
-            );
-            should(value()).is.equal(1);
-            should(value(undefined, 1)).is.equal(2);
-        });
-    });
+      should.doesNotThrow(
+        () => descriptor.value(), TypeError, /argument types/
+      )
+      should(descriptor.value()).is.equal(1)
+      should(descriptor.value(undefined, 1)).is.equal(2)
+    })
+  })
 
-    describe('TypedProps.result()', function() {
-        it('Should check function returned value', function() {
-            const f = T.result(T.number);
+  describe('TypedProps.result()', function() {
+    it('Should check function returned value', function() {
+      const decorate = T.result(Type.number)
 
-            const {value} = f(null, 'test', {
-                value(a) {
-                    return a;
-                },
-            });
+      const descriptor = {value(v) { return v }}
+      decorate(null, 'test', descriptor)
 
-            should.doesNotThrow(
-                () => value(), TypeError, /result type/
-            );
-            should.doesNotThrow(
-                () => value(1), TypeError, /result type/
-            );
-            should.throws(
-                () => value('string'), TypeError, /result type/
-            );
+      should.doesNotThrow(
+        () => descriptor.value(), TypeError, /result type/
+      )
+      should.doesNotThrow(
+        () => descriptor.value(1), TypeError, /result type/
+      )
+      should.throws(
+        () => descriptor.value('string'), TypeError, /result type/
+      )
 
-            should(value(1)).is.equal(1);
-            should(value()).is.equal(undefined);
-        });
-    });
-});
+      should(descriptor.value(1)).is.equal(1)
+      should(descriptor.value()).is.equal(undefined)
+    })
+
+    it('Should throw if descriptor.value is not a function', function() {
+      const decorate = T.result(Type.number)
+      
+      should.throws(
+        () => decorate(null, 'test', {}),
+        TypeError,
+        /Decorated property "test" is not a function/
+      )
+    })
+  })
+})
