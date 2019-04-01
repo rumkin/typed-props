@@ -1,8 +1,8 @@
 import {
   Checkable,
-  CheckableType,
+  ICheckable,
   Rule,
-  RuleType,
+  IRule,
   Issue,
   Check,
   // Decorators
@@ -33,8 +33,8 @@ export {
   listRules,
   CHECK,
   CHECKS,
-  CheckableType,
-  RuleType,
+  ICheckable,
+  IRule,
 }
 
 function skip(test: (it: any) => boolean) {
@@ -112,7 +112,7 @@ class IsRequired extends UniqRule {
       }
     ]
   }
- 
+
   static check(value:any, {isRequired}: {isRequired: boolean}): Issue[] {
     if (typeof value === 'undefined' && isRequired) {
       return [{
@@ -309,7 +309,7 @@ class OneOf extends UniqRule {
         expect: {values},
         is: false,
       },
-    }]    
+    }]
   }
 }
 
@@ -394,7 +394,7 @@ class ObjectOf extends UniqRule {
       ),
       {
         rule: this.ruleName,
-        
+
         params,
         check: this.check.bind(this),
       },
@@ -536,7 +536,7 @@ class Select extends UniqRule {
         }
       }
     }
-    
+
     return [{
       rule: this.ruleName,
       path: [],
@@ -695,7 +695,7 @@ class TypedProps extends Checkable {
   }
 
   // InstanceOf
-  
+
   @toStatic(InstanceOf)
   static instanceOf(_constructor: object): TypedProps {
     return new this()
@@ -705,7 +705,7 @@ class TypedProps extends Checkable {
   instanceOf(_constructor: object): TypedProps {
     return this
   }
-  
+
   // OneOf
 
   @toStatic(Is)

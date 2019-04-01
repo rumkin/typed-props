@@ -16,14 +16,14 @@ export type Issue = {
   }
 }
 
-export type RuleType = {
+export type IRule = {
   ruleName: string
   create: (checks: Check[], params: Object) => Check[]
   config: (...args: any[]) => Object
   check: (value: any, params: Object) => Issue[]
 }
 
-export type CheckableType = {
+export type ICheckable = {
   [CHECK]: (it:any, type: Checkable|Object) => Issue[]
 }
 
@@ -45,7 +45,7 @@ export class Rule {
   static config(..._args: any[]): Object {
     return {}
   }
-  
+
   /* istanbul ignore next */
   static check(_value: any, _params: object): Issue[] {
     return []
@@ -191,14 +191,14 @@ function checkEach(args: any[], type: Checkable[]): Issue[] {
 }
 
 
-export function toStatic(checkable: RuleType, {defaultChecks = []} = {}) {
+export function toStatic(checkable: IRule, {defaultChecks = []} = {}) {
   return function(_target: any, _name: any, descriptor: PropertyDescriptor) {
     if (typeof descriptor.get === 'function') {
       descriptor.get = function() {
         const checks = checkable.create(defaultChecks,
           checkable.config()
         )
-  
+
         return new this(checks)
       }
     }
@@ -207,14 +207,14 @@ export function toStatic(checkable: RuleType, {defaultChecks = []} = {}) {
         const checks = checkable.create(defaultChecks,
           checkable.config(...args)
         )
-  
+
         return new this(checks)
       }
     }
   }
 }
-  
-export function toInstance(checkable: RuleType) {
+
+export function toInstance(checkable: IRule) {
   return function(_target: any, _name: any, descriptor: PropertyDescriptor) {
     if (typeof descriptor.get === 'function') {
       descriptor.get = function() {
@@ -222,7 +222,7 @@ export function toInstance(checkable: RuleType) {
         const checks = checkable.create(this[CHECKS],
           checkable.config()
         )
-  
+
         return new this.constructor(checks)
       }
     } else {
@@ -230,7 +230,7 @@ export function toInstance(checkable: RuleType) {
         const checks = checkable.create(this[CHECKS],
           checkable.config(...args)
         )
-  
+
         return new this.constructor(checks)
       }
     }
