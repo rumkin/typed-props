@@ -4,6 +4,7 @@
         "module": "commonjs",
         "sourceMap": true,
         "outDir": "dist/src",
+        "declarationDir": "dist/types",
         "experimentalDecorators": true,
         "declaration": true,
         "lib": [
