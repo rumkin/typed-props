@@ -7,7 +7,7 @@
 ![](https://img.shields.io/badge/coverage-100%25-green.svg?style=flat-square)
 ![](https://img.shields.io/badge/size-13.0%20KiB-blue.svg?style=flat-square)
 ![](https://img.shields.io/badge/deps-0-blue.svg?style=flat-square)
-[![npm](https://img.shields.io/npm/dm/typed-props.svg?style=flat-square)](https://npmjs.com/packages/typed-props)
+[![npm](https://img.shields.io/npm/dm/typed-props.svg?style=flat-square)](https://npmjs.com/package/typed-props)
 
 Facebook's PropTypes-alike interface implementation for client and server, reusable
 and extensible. It produce error reports instead of throwing or printing into
@@ -98,7 +98,7 @@ Example:
   {
     // Violated rule.
     rule: 'type',
-    // Violation path. It helps to receive value in nested object.
+    // Value location. It helps to receive value from nested object.
     path: ['user', 'messages', 0],
     // Details explain what exactly goes wrong.
     details: {
@@ -177,6 +177,7 @@ Result of `check` call is array of [issues](#issue-type). If there is no issues,
 empty.
 
 > ⚠️ If shape/exact rule property presented by function it should return type to check.
+
 > ⚠️ .object will fail for arrays and vice versa.
 
 ## Non-standard checks
