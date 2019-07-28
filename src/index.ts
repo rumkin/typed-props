@@ -480,21 +480,95 @@ class Exact extends Shape {
 
   @skip(isUndefined)
   static check(it:any, {shape}: {shape: ShapeType}): Issue[] {
-    const issues =  Shape.check.call(this, it, {shape});
+    const issues =  super.check.call(this, it, {shape});
 
     for (const prop of Object.getOwnPropertyNames(it)) {
-      if (! shape.hasOwnProperty(prop)) {
-        issues.push({
-          rule: this.ruleName,
-          path: [prop],
-          details: {
-            reason: 'redundant',
-          },
-        })
+      if (shape.hasOwnProperty(prop)) {
+        continue
       }
+
+      issues.push({
+        rule: this.ruleName,
+        path: [prop],
+        details: {
+          reason: 'redundant',
+        },
+      })
     }
 
     return issues
+  }
+}
+
+type ExactFuzzyParamsType = {shape: ShapeType, custom: Array<ExactFuzzyCustomParamType>}
+type ExactFuzzyCustomParamType = [RegExp, Checkable]
+
+class ExactFuzzy extends UniqRule {
+  static ruleName = 'shape'
+
+  static config(shape: ShapeType, ...custom:ExactFuzzyCustomParamType[]): ExactFuzzyParamsType {
+    return {shape, custom}
+  }
+
+  static create(checks:Check[], params:ExactFuzzyParamsType): Check[] {
+    const shapeRule = Array.isArray(params.shape)
+    ? IsArray
+    : IsObject;
+
+    return [
+      ...shapeRule.create(
+        filterByRuleName(checks, this.ruleName),
+        shapeRule.config(true),
+      ),
+      {
+        rule: this.ruleName,
+        params,
+        check: this.check.bind(this),
+      },
+    ]
+  }
+
+  @skip(isUndefined)
+  static check(it:any, {shape, custom}: ExactFuzzyParamsType): Issue[] {
+    const issues = Object.entries(shape)
+    .map(([key, type]) => this.checkProp(key, it[key], type).map((issue) => shiftPath(key, issue)))
+    .reduce((result, item) => result.concat(item), [])
+
+    Props: for (const prop of Object.getOwnPropertyNames(it)) {
+      if (shape.hasOwnProperty(prop)) {
+        continue
+      }
+
+      for (const [regexp, customType] of custom) {
+        if (regexp.test(prop)) {
+          issues.push(...this.checkProp(prop, it[prop], customType).map((issue) => shiftPath(prop, issue)))
+          continue Props
+        }
+      }
+
+      issues.push({
+        rule: this.ruleName,
+        path: [prop],
+        details: {
+          reason: 'redundant',
+        },
+      })
+    }
+
+    return issues
+  }
+
+  static checkProp(key: string|number, value: any, type: Checkable|ShapeType|Function) {
+    if (typeof type === 'function') {
+      type = (<unknown>type as Function)()
+    }
+
+    if (isObject(type) && isPlainObject(type)) {
+      return this.check(value, {shape: <unknown>type as ShapeType, custom:[]})
+    }
+    else {
+      return check(value, type)
+    }
   }
 }
 
@@ -516,9 +590,9 @@ class Select extends UniqRule {
         throw new TypeError(`Argument #${i + 1} first item isn't a function`)
       }
       else if (item[1] instanceof Checkable === false) {
-        throw new TypeError(`Argument #${i + 1} second item isn't a Rule`)
+        throw new TypeError(`Argument #${i + 1} second item isn't a Rule or function`)
       }
-      select.push(item)
+      select.push([...item])
     }
 
     return {select}
@@ -790,6 +864,18 @@ class TypedProps extends Checkable {
     return this
   }
 
+  // Exact
+
+  @toStatic(ExactFuzzy)
+  static exactFuzzy(_shape: ShapeType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
+    return new this()
+  }
+
+  @toInstance(ExactFuzzy)
+  exactFuzzy(_shape: ShapeType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
+    return this
+  }
+
   // Select
 
   @toStatic(Select)
@@ -988,6 +1074,26 @@ class StrictTypedProps extends TypedProps {
 
   @toInstance(Shape)
   shape(_shape: ShapeType): TypedProps {
+    return this
+  }
+
+  @toStatic(Exact, strictOptions)
+  static exact(_shape: ShapeType): TypedProps {
+    return new this()
+  }
+
+  @toInstance(Exact)
+  exact(_shape: ShapeType): TypedProps {
+    return this
+  }
+
+  @toStatic(ExactFuzzy, strictOptions)
+  static exactFuzzy(_shape: ShapeType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
+    return new this()
+  }
+
+  @toInstance(ExactFuzzy)
+  exactFuzzy(_shape: ShapeType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
     return this
   }
 

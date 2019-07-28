@@ -77,7 +77,7 @@ const issues = check(data, type)
 ### Output
 
 Result of validation is an Array of Issues. Issue is an object which describes
-validator rules violation. 
+validator rules violation.
 
 Issue typing:
 ```typescript
@@ -168,6 +168,11 @@ const shape = Type.shape({
     id: Type.number,
     name: Type.string,
   }),
+  // Exact shape with custom props
+  exactShape: Type.exactFuzzy({
+    id: Type.number,
+    name: Type.string,
+  }, [/Id$/, Type.string]),
 })
 
 const issues = check({}, shape) // => [{path:['anything'], rule: 'isRequired', details: {is: false}}]
@@ -243,6 +248,20 @@ Type.select(
   [(value) => (typeof value === 'number'), Type.number],
   [() => true, Type.any] // Otherwise accept anything
 )
+```
+
+### `Checkable.exactFuzzy()`
+```
+(shape:ShapeType, fuzzy:...[RegExp, Checkable]) -> Checkable
+
+ShapeType = Object<key,Checkable|Shape>
+```
+
+Check exact shape with fuzzy properties which keys should match regexp from fuzzy params.
+
+```javascript
+const fuzzy = Type.exactFuzzy({}, [/Id$/, Type.number])
+check({userId: 1, postId: 2}, fuzzy)
 ```
 
 ### `Checkable.custom()`
@@ -375,7 +394,7 @@ Object.define(Type.prototype, 'isFinite', {
 
 ### Rule types
 
-There is several Rules which are using internally. 
+There is several Rules which are using internally.
 
 #### UniqRule
 

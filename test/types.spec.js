@@ -29,11 +29,11 @@ describe('TypedProps', function() {
         should(report[0].rule).be.equal('isRequired')
       })
     })
-    
+
     describe('.optional', () => {
       it('Should be replace with isRequired', () => {
         const type = Type.isRequired.optional
-  
+
         should(type.getChecks()).has.lengthOf(0)
       })
     })
@@ -41,7 +41,7 @@ describe('TypedProps', function() {
     describe('.any', () => {
       it('Should remove `type` checks', () => {
         const type = Type.object.any
-  
+
         should(type.getChecks()).has.lengthOf(0)
       })
     })
@@ -597,7 +597,7 @@ describe('TypedProps', function() {
       })
 
       it('Should not treat an array as an object', function() {
-        const value = [0, 1];
+        const value = [0, 1]
 
         const type = Type.shape({
           0: Type.number,
@@ -742,61 +742,61 @@ describe('TypedProps', function() {
           one: 1,
           two: 0,
         }
-  
+
         const type = Type.exact({
           one: Type.number,
           two: Type.number,
         })
-  
+
         const report = check(value, type)
-  
+
         should(report).has.lengthOf(0)
       })
-  
+
       it('Should pass undefined', function() {
         const value = void 0
-  
+
         const type = Type.exact({})
-  
+
         const report = check(value, type)
-  
+
         should(report).has.lengthOf(0)
       })
-  
+
       it('Should not pass not an object', function() {
         const value = null
-  
+
         const type = Type.shape({
-          
+
         })
-  
+
         const report = check(value, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('type')
         should(report[0].details.type).be.equal('object')
       })
-  
+
       it('Should not pass incorrect', function() {
         const value = {
           one: 1,
           two: 2,
           three: true,
         }
-  
+
         const type = Type.exact({
           one: Type.number,
           two: Type.bool,
         })
-  
+
         const report = check(value, type)
-  
+
         should(report).has.lengthOf(2)
-  
+
         should(report[0].path).be.deepEqual(['two'])
         should(report[0].rule).be.equal('type')
         should(report[0].details.type).be.equal('bool')
-  
+
         should(report[1].path).be.deepEqual(['three'])
         should(report[1].rule).be.equal('shape')
         should(report[1].details).be.deepEqual({reason: 'redundant'})
@@ -811,7 +811,7 @@ describe('TypedProps', function() {
 
         const type = Type.exact({
           user: {
-            name: Type.string.isRequired
+            name: Type.string.isRequired,
           },
         })
 
@@ -873,7 +873,172 @@ describe('TypedProps', function() {
         should(report).has.lengthOf(2)
         should(report[0].rule).be.equal('type')
         should(report[0].details.type).be.equal('number')
-        
+
+        should(report[1].path).be.deepEqual(['extraProperty'])
+        should(report[1].rule).be.equal('shape')
+        should(report[1].details).be.deepEqual({reason: 'redundant'})
+      })
+    })
+
+    describe('.exactFuzzy()', function() {
+      it('Should pass correct', function() {
+        const value = {
+          one: 1,
+          two: 0,
+        }
+
+        const type = Type.exact({
+          one: Type.number,
+          two: Type.number,
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should pass undefined', function() {
+        const value = void 0
+
+        const type = Type.exact({})
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should not pass not an object', function() {
+        const value = null
+
+        const type = Type.shape({
+
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(1)
+        should(report[0].rule).be.equal('type')
+        should(report[0].details.type).be.equal('object')
+      })
+
+      it('Should not pass incorrect', function() {
+        const value = {
+          one: 1,
+          two: 2,
+          three: true,
+        }
+
+        const type = Type.exact({
+          one: Type.number,
+          two: Type.bool,
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(2)
+
+        should(report[0].path).be.deepEqual(['two'])
+        should(report[0].rule).be.equal('type')
+        should(report[0].details.type).be.equal('bool')
+
+        should(report[1].path).be.deepEqual(['three'])
+        should(report[1].rule).be.equal('shape')
+        should(report[1].details).be.deepEqual({reason: 'redundant'})
+      })
+
+      it('Should not pass incorrect custom', function() {
+        const value = {
+          one: 1,
+          two: 2,
+        }
+
+        const type = Type.exactFuzzy({}, [/on./, Type.string])
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(2)
+
+        should(report[0].path).be.deepEqual(['one'])
+        should(report[0].rule).be.equal('type')
+        should(report[0].details.type).be.equal('string')
+
+        should(report[1].path).be.deepEqual(['two'])
+        should(report[1].rule).be.equal('shape')
+        should(report[1].details).be.deepEqual({reason: 'redundant'})
+      })
+
+      it('Should pass nested shapes', function() {
+        const value = {
+          user: {
+            name: 'Julio',
+          },
+        }
+
+        const type = Type.exact({
+          user: {
+            name: Type.string.isRequired,
+          },
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should check nested shapes', function() {
+        const value = {
+          user: {
+            name: 'Julio',
+            extraProperty: true,
+          },
+        }
+
+        const type = Type.exact({
+          user: {
+            name: Type.string.isRequired,
+            money: Type.number.isRequired,
+          },
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(2)
+
+        should(report[1].path).be.deepEqual(['user', 'extraProperty'])
+        should(report[1].rule).be.equal('shape')
+        should(report[1].details).be.deepEqual({reason: 'redundant'})
+      })
+
+      it('Should pass function rule', function() {
+        const value = {
+          amount: 1,
+        }
+
+        const type = Type.exact({
+          amount: () => Type.number,
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(0)
+      })
+
+      it('Should check function rule', function() {
+        const value = {
+          amount: null,
+          extraProperty: true,
+        }
+
+        const type = Type.exact({
+          amount: () => Type.number,
+        })
+
+        const report = check(value, type)
+
+        should(report).has.lengthOf(2)
+        should(report[0].rule).be.equal('type')
+        should(report[0].details.type).be.equal('number')
+
         should(report[1].path).be.deepEqual(['extraProperty'])
         should(report[1].rule).be.equal('shape')
         should(report[1].details).be.deepEqual({reason: 'redundant'})
@@ -955,23 +1120,23 @@ describe('TypedProps', function() {
     describe('.custom', () => {
       it('Should execute check', () => {
         const type = Type.custom(() => false)
-        const issues = check(undefined, type)
+        const issues = check(void 0, type)
 
-        should(issues).has.lengthOf(1);
+        should(issues).has.lengthOf(1)
       })
 
       it('Should pass valid value', () => {
         const type = Type.custom((value) => value === true)
         const issues = check(true, type)
 
-        should(issues).has.lengthOf(0);
+        should(issues).has.lengthOf(0)
       })
 
       it('Should handle even undefined values', () => {
         const type = Type.custom((it) => it !== void 0)
-        const issues = check(undefined, type)
+        const issues = check(void 0, type)
 
-        should(issues).has.lengthOf(1);
+        should(issues).has.lengthOf(1)
       })
 
       it('Should throw on `null` argument', () => {
@@ -983,13 +1148,13 @@ describe('TypedProps', function() {
       })
     })
   })
-  
+
   describe('StrictTypedProps', () => {
     describe('.bool', () => {
       it('Should add isRequired by default', () => {
         const type = StrictType.bool
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -999,7 +1164,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.number
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1009,7 +1174,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.string
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1019,7 +1184,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.object
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1029,7 +1194,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.func
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1039,7 +1204,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.array
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1049,7 +1214,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.symbol
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1059,7 +1224,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.instanceOf()
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1069,7 +1234,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.is()
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1079,7 +1244,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.oneOf()
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1089,7 +1254,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.oneOfType()
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1099,7 +1264,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.arrayOf()
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1109,7 +1274,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.objectOf()
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1119,7 +1284,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.select([() => true, StrictType.any])
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
@@ -1129,7 +1294,7 @@ describe('TypedProps', function() {
       it('Should add isRequired by default', () => {
         const type = StrictType.custom(() => false)
         const report = check(void 0, type)
-  
+
         should(report).has.lengthOf(1)
         should(report[0].rule).be.equal('isRequired')
       })
