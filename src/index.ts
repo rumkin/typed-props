@@ -20,6 +20,8 @@ import {
   CHECKS,
 } from './base'
 
+import {Store, Ref, unref} from './store'
+
 export {
   Checkable,
   Rule,
@@ -35,6 +37,8 @@ export {
   CHECKS,
   ICheckable,
   IRule,
+  Store,
+  Ref,
 }
 
 function skip(test: (it: any) => boolean) {
@@ -316,13 +320,14 @@ class OneOf extends UniqRule {
 class OneOfType extends UniqRule {
   static ruleName = 'oneOfType'
 
-  static config(types: Rule[]) {
+  static config(types: Array<Rule|Ref>) {
     return {types}
   }
 
   @skip(isUndefined)
   static check(it:any, {types}): Issue[] {
-    const hasSome = types.some((type: any) => {
+    const hasSome = types.map((t) => unref(t))
+    .some((type: any) => {
       const issues = check(it, type)
       return issues.length === 0
     })
@@ -346,7 +351,7 @@ class OneOfType extends UniqRule {
 class ArrayOf extends UniqRule {
   static ruleName = 'arrayOf'
 
-  static config(type: Rule[]) {
+  static config(type: Array<Rule|Ref>) {
     return {type}
   }
 
@@ -367,7 +372,7 @@ class ArrayOf extends UniqRule {
   @skip(isUndefined)
   static check(it:any, {type}): Issue[] {
     return it.map((item, i) => {
-      const issues = check(item, type)
+      const issues = check(item, unref(type))
 
       return issues.map(({path, ...rest}) => ({
         path: [i, ...path],
@@ -382,7 +387,7 @@ class ArrayOf extends UniqRule {
 class ObjectOf extends UniqRule {
   static ruleName = 'objectOf'
 
-  static config(type: Rule[]) {
+  static config(type: Array<Rule|Ref>) {
     return {type}
   }
 
@@ -404,7 +409,7 @@ class ObjectOf extends UniqRule {
   @skip(isUndefined)
   static check(it:any, {type}): Issue[] {
     return Object.entries(it).map(([i, item]) => {
-      const issues = check(item, type)
+      const issues = check(item, unref(type))
 
       return issues.map(({path, ...rest}) => ({
         path: [i, ...path],
@@ -416,16 +421,19 @@ class ObjectOf extends UniqRule {
   }
 }
 
-type ShapeType = {[key:string]: Checkable}|Array<Checkable>;
+type ShapeParamsType = {
+  shape: ShapeParamType
+}
+type ShapeParamType = {[key:string]: Checkable|Ref}|Array<Checkable|Ref>;
 
 class Shape extends UniqRule {
   static ruleName = 'shape'
 
-  static config(shape: ShapeType): {shape:ShapeType} {
+  static config(shape: ShapeParamType): ShapeParamsType {
     return {shape}
   }
 
-  static create(checks:Check[], params:{shape: ShapeType}): Check[] {
+  static create(checks:Check[], params:{shape: ShapeParamType}): Check[] {
     const shapeRule = Array.isArray(params.shape)
     ? IsArray
     : IsObject;
@@ -444,22 +452,22 @@ class Shape extends UniqRule {
   }
 
   @skip(isUndefined)
-  static check(it:any, {shape}: {shape: ShapeType}): Issue[] {
+  static check(it:any, {shape}: {shape: ShapeParamType}): Issue[] {
     return Object.entries(shape)
     .map(([key, type]) => this.checkProp(key, it[key], type).map((issue) => shiftPath(key, issue)))
     .reduce((result, item) => result.concat(item), [])
   }
 
-  static checkProp(key: string|number, value: any, type: Checkable|ShapeType|Function) {
+  static checkProp(key: string|number, value: any, type: Checkable|ShapeParamType|Ref|Function) {
     if (typeof type === 'function') {
       type = (<unknown>type as Function)()
     }
 
     if (isObject(type) && isPlainObject(type)) {
-      return this.check(value, {shape: <unknown>type as ShapeType})
+      return this.check(value, {shape: <unknown>type as ShapeParamType})
     }
     else {
-      return check(value, type)
+      return check(value, unref(type))
     }
   }
 }
@@ -474,12 +482,12 @@ function shiftPath(key:string|number, {path, ...rest}: Issue): Issue {
 class Exact extends Shape {
   static ruleName = 'shape'
 
-  static config(shape: ShapeType): {shape: ShapeType} {
+  static config(shape: ShapeParamType): {shape: ShapeParamType} {
     return {shape}
   }
 
   @skip(isUndefined)
-  static check(it:any, {shape}: {shape: ShapeType}): Issue[] {
+  static check(it:any, {shape}: {shape: ShapeParamType}): Issue[] {
     const issues =  super.check.call(this, it, {shape});
 
     for (const prop of Object.getOwnPropertyNames(it)) {
@@ -500,14 +508,14 @@ class Exact extends Shape {
   }
 }
 
-type ExactFuzzyParamsType = {shape: ShapeType, custom: Array<ExactFuzzyCustomParamType>}
+type ExactFuzzyParamsType = {shape: ShapeParamType, fuzzy: Array<ExactFuzzyCustomParamType>}
 type ExactFuzzyCustomParamType = [RegExp, Checkable]
 
 class ExactFuzzy extends UniqRule {
   static ruleName = 'shape'
 
-  static config(shape: ShapeType, ...custom:ExactFuzzyCustomParamType[]): ExactFuzzyParamsType {
-    return {shape, custom}
+  static config(shape: ShapeParamType, ...fuzzy:ExactFuzzyCustomParamType[]): ExactFuzzyParamsType {
+    return {shape, fuzzy}
   }
 
   static create(checks:Check[], params:ExactFuzzyParamsType): Check[] {
@@ -529,7 +537,7 @@ class ExactFuzzy extends UniqRule {
   }
 
   @skip(isUndefined)
-  static check(it:any, {shape, custom}: ExactFuzzyParamsType): Issue[] {
+  static check(it:any, {shape, fuzzy}: ExactFuzzyParamsType): Issue[] {
     const issues = Object.entries(shape)
     .map(([key, type]) => this.checkProp(key, it[key], type).map((issue) => shiftPath(key, issue)))
     .reduce((result, item) => result.concat(item), [])
@@ -539,9 +547,9 @@ class ExactFuzzy extends UniqRule {
         continue
       }
 
-      for (const [regexp, customType] of custom) {
+      for (const [regexp, fuzzyType] of fuzzy) {
         if (regexp.test(prop)) {
-          issues.push(...this.checkProp(prop, it[prop], customType).map((issue) => shiftPath(prop, issue)))
+          issues.push(...this.checkProp(prop, it[prop], fuzzyType).map((issue) => shiftPath(prop, issue)))
           continue Props
         }
       }
@@ -558,24 +566,30 @@ class ExactFuzzy extends UniqRule {
     return issues
   }
 
-  static checkProp(key: string|number, value: any, type: Checkable|ShapeType|Function) {
+  static checkProp(key: string|number, value: any, type: Checkable|ShapeParamType|Ref|Function) {
     if (typeof type === 'function') {
       type = (<unknown>type as Function)()
     }
 
     if (isObject(type) && isPlainObject(type)) {
-      return this.check(value, {shape: <unknown>type as ShapeType, custom:[]})
+      return this.check(value, {shape: <unknown>type as ShapeParamType, fuzzy:[]})
     }
     else {
-      return check(value, type)
+      return check(value, unref(type))
     }
   }
 }
 
+type SelectParamsType = {
+  select: Array<SelectItemType>,
+}
+type SelectItemType = [SelectRuleType, Checkable|Ref]
+type SelectRuleType = (arg:any) => boolean
+
 class Select extends UniqRule {
   static ruleName = 'select'
 
-  static config(...args:any[]): Object {
+  static config(...args:Array<SelectRuleType>): SelectParamsType {
     const select = []
 
     for (let i = 0; i < args.length; i++) {
@@ -589,7 +603,7 @@ class Select extends UniqRule {
       else if (typeof item[0] !== 'function') {
         throw new TypeError(`Argument #${i + 1} first item isn't a function`)
       }
-      else if (item[1] instanceof Checkable === false) {
+      else if (item[1] instanceof Checkable === false && item[1] instanceof Ref === false) {
         throw new TypeError(`Argument #${i + 1} second item isn't a Rule or function`)
       }
       select.push([...item])
@@ -599,14 +613,14 @@ class Select extends UniqRule {
   }
 
   @skip(isUndefined)
-  static check(it:any, {select}): Issue[] {
+  static check(it:any, {select}:SelectParamsType): Issue[] {
     for (let i = 0; i < select.length; i++) {
       const item = select[i]
       if (Array.isArray(item)) {
         const [match, type] = item
 
         if (match(it) === true) {
-          return check(it, type)
+          return check(it, unref(type))
         }
       }
     }
@@ -843,36 +857,36 @@ class TypedProps extends Checkable {
   // Shape
 
   @toStatic(Shape)
-  static shape(_shape: ShapeType): TypedProps {
+  static shape(_shape: ShapeParamType): TypedProps {
     return new this()
   }
 
   @toInstance(Shape)
-  shape(_shape: ShapeType): TypedProps {
+  shape(_shape: ShapeParamType): TypedProps {
     return this
   }
 
   // Exact
 
   @toStatic(Exact)
-  static exact(_shape: ShapeType): TypedProps {
+  static exact(_shape: ShapeParamType): TypedProps {
     return new this()
   }
 
   @toInstance(Exact)
-  exact(_shape: ShapeType): TypedProps {
+  exact(_shape: ShapeParamType): TypedProps {
     return this
   }
 
   // Exact
 
   @toStatic(ExactFuzzy)
-  static exactFuzzy(_shape: ShapeType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
+  static exactFuzzy(_shape: ShapeParamType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
     return new this()
   }
 
   @toInstance(ExactFuzzy)
-  exactFuzzy(_shape: ShapeType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
+  exactFuzzy(_shape: ShapeParamType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
     return this
   }
 
@@ -1068,32 +1082,32 @@ class StrictTypedProps extends TypedProps {
   // Shape
 
   @toStatic(Shape, strictOptions)
-  static shape(_shape: ShapeType): TypedProps {
+  static shape(_shape: ShapeParamType): TypedProps {
     return new this()
   }
 
   @toInstance(Shape)
-  shape(_shape: ShapeType): TypedProps {
+  shape(_shape: ShapeParamType): TypedProps {
     return this
   }
 
   @toStatic(Exact, strictOptions)
-  static exact(_shape: ShapeType): TypedProps {
+  static exact(_shape: ShapeParamType): TypedProps {
     return new this()
   }
 
   @toInstance(Exact)
-  exact(_shape: ShapeType): TypedProps {
+  exact(_shape: ShapeParamType): TypedProps {
     return this
   }
 
   @toStatic(ExactFuzzy, strictOptions)
-  static exactFuzzy(_shape: ShapeType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
+  static exactFuzzy(_shape: ShapeParamType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
     return new this()
   }
 
   @toInstance(ExactFuzzy)
-  exactFuzzy(_shape: ShapeType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
+  exactFuzzy(_shape: ShapeParamType, _custom:ExactFuzzyCustomParamType[]): TypedProps {
     return this
   }
 
