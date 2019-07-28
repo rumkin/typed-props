@@ -1,6 +1,6 @@
 import {Checkable} from './base'
 
-export class Store {
+export class TypeStore {
   private store = new Map()
 
   add(name:string, type: Checkable) {
@@ -17,9 +17,9 @@ export class Store {
 }
 
 export class Ref {
-  private store: Store
+  private store: TypeStore
   public readonly name:string
-  constructor(store:Store, name:string) {
+  constructor(store:TypeStore, name:string) {
     this.store = store
     this.name = name
   }

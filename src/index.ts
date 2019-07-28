@@ -20,7 +20,7 @@ import {
   CHECKS,
 } from './base'
 
-import {Store, Ref, unref} from './store'
+import {TypeStore, Ref, unref} from './store'
 
 export {
   Checkable,
@@ -37,7 +37,7 @@ export {
   CHECKS,
   ICheckable,
   IRule,
-  Store,
+  TypeStore,
   Ref,
 }
 

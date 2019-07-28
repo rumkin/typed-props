@@ -2,11 +2,11 @@
 /* global it */
 const should = require('should')
 
-const {Type, Store, Ref, check} = require('..')
+const {Type, TypeStore: Store, Ref, check} = require('..')
 
-describe('Store.', function(){
-  describe('Store()', function() {
-    describe('Store#add(), Store#get()', function() {
+describe('TypeStore.', function(){
+  describe('TypeStore()', function() {
+    describe('TypeStore#add(), Store#get()', function() {
       it('Should add new rule', function() {
         const type = Type.string
 
@@ -17,7 +17,7 @@ describe('Store.', function(){
       })
     })
 
-    describe('Store#ref()', function() {
+    describe('TypeStore#ref()', function() {
       it('Should return a reference', function () {
         const store = new Store()
 
