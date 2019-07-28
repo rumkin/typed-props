@@ -5,10 +5,10 @@
 - [ ] Report stringification with intl.
 - [ ] TypedProp serialization/deserialization.
 - [ ] Modern export interface.
-- [ ] Type names.
+- [x] Type names.
 
-### v1.2
- 
+### v1.4
+
  - [ ] Select should accept plain object as shapes.
  - [ ] Add context to prevent circular structures failures.
  - [ ] Inspect details.reason wider implementation:

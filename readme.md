@@ -124,7 +124,7 @@ Example:
 Standard checks provided by Facebook's PropTypes:
 
 ```javascript
-import {Type} from 'typed-props'
+import {Type, TypeStore} from 'typed-props'
 
 // Object properties should pass all checks.
 const shape = Type.shape({
@@ -184,6 +184,31 @@ empty.
 > ⚠️ If shape/exact rule property presented by function it should return type to check.
 
 > ⚠️ .object will fail for arrays and vice versa.
+
+## Named and circular types
+
+Using named types it's possible to created nested structures with cross references.
+It could be useful for validating complex data types. Also names help to produce more
+meaningful error reports.
+
+```javascript
+const store = new TypeStore()
+
+const userType = Type.shape({
+  id: Type.number.isRequired,
+  name: Type.string.isRequired,
+  posts: Type.arrayOf(store.ref('Post')),
+})
+
+const postType = Type.shape({
+  id: Type.number.isRequired,
+  title: Type.string.isRequired,
+  authors: Type.arrayOf(store.ref('User')),
+})
+
+store.add('User', userType)
+store.add('Post', postType)
+```
 
 ## Non-standard checks
 
