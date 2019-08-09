@@ -5,6 +5,7 @@ import {
   IRule,
   Issue,
   Check,
+  Context,
   // Decorators
   toInstance,
   toStatic,
@@ -15,6 +16,7 @@ import {
   getChecks,
   getRuleParams,
   listRules,
+  nestContext,
   // Miscelaneous
   CHECK,
   CHECKS,
@@ -23,6 +25,7 @@ import {
 import {TypeStore, Ref, unref} from './store'
 
 export {
+  Context,
   Checkable,
   Rule,
   toInstance,
@@ -77,8 +80,8 @@ export class SimpleRule extends UniqRule {
     return {expect}
   }
 
-  static check(it: any, {expect, ...rest}:{expect:boolean}): Issue[] {
-    if (this.checkIt(it, rest) === expect) {
+  static check(it: any, {expect, ...rest}:{expect:boolean}, context: Context): Issue[] {
+    if (this.checkIt(it, rest, context) === expect) {
       return []
     }
 
@@ -94,7 +97,7 @@ export class SimpleRule extends UniqRule {
   }
 
   /* istanbul ignore next */
-  static checkIt(_it:any, _params: object):boolean {
+  static checkIt(_it:any, _params: object, _context: Context):boolean {
     return true
   }
 }
@@ -325,10 +328,10 @@ class OneOfType extends UniqRule {
   }
 
   @skip(isUndefined)
-  static check(it:any, {types}): Issue[] {
+  static check(it:any, {types}, context: Context): Issue[] {
     const hasSome = types.map((t) => unref(t))
     .some((type: any) => {
-      const issues = check(it, type)
+      const issues = check(it, type, context)
       return issues.length === 0
     })
 
@@ -370,9 +373,9 @@ class ArrayOf extends UniqRule {
   }
 
   @skip(isUndefined)
-  static check(it:any, {type}): Issue[] {
+  static check(it:any, {type}, context: Context): Issue[] {
     return it.map((item, i) => {
-      const issues = check(item, unref(type))
+      const issues = check(item, unref(type), nestContext(context, i, it))
 
       return issues.map(({path, ...rest}) => ({
         path: [i, ...path],
@@ -407,9 +410,9 @@ class ObjectOf extends UniqRule {
   }
 
   @skip(isUndefined)
-  static check(it:any, {type}): Issue[] {
+  static check(it:any, {type}, context: Context): Issue[] {
     return Object.entries(it).map(([i, item]) => {
-      const issues = check(item, unref(type))
+      const issues = check(item, unref(type), nestContext(context, i, it))
 
       return issues.map(({path, ...rest}) => ({
         path: [i, ...path],
@@ -452,22 +455,32 @@ class Shape extends UniqRule {
   }
 
   @skip(isUndefined)
-  static check(it:any, {shape}: {shape: ShapeParamType}): Issue[] {
+  static check(it:any, {shape}: {shape: ShapeParamType}, context:Context): Issue[] {
     return Object.entries(shape)
-    .map(([key, type]) => this.checkProp(key, it[key], type).map((issue) => shiftPath(key, issue)))
+    .map(
+      ([key, type]) => this.checkProp(
+        key, it[key], type, nestContext(context, key, it)
+      )
+      .map((issue) => shiftPath(key, issue))
+    )
     .reduce((result, item) => result.concat(item), [])
   }
 
-  static checkProp(key: string|number, value: any, type: Checkable|ShapeParamType|Ref|Function) {
+  static checkProp(
+    key: string|number,
+    value: any,
+    type: Checkable|ShapeParamType|Ref|Function,
+    context: Context,
+  ) {
     if (typeof type === 'function') {
       type = (<unknown>type as Function)()
     }
 
     if (isObject(type) && isPlainObject(type)) {
-      return this.check(value, {shape: <unknown>type as ShapeParamType})
+      return this.check(value, {shape: <unknown>type as ShapeParamType}, context)
     }
     else {
-      return check(value, unref(type))
+      return check(value, unref(type), context)
     }
   }
 }
@@ -487,8 +500,8 @@ class Exact extends Shape {
   }
 
   @skip(isUndefined)
-  static check(it:any, {shape}: {shape: ShapeParamType}): Issue[] {
-    const issues =  super.check.call(this, it, {shape});
+  static check(it:any, {shape}: {shape: ShapeParamType}, context:Context): Issue[] {
+    const issues =  super.check.call(this, it, {shape}, context)
 
     for (const prop of Object.getOwnPropertyNames(it)) {
       if (shape.hasOwnProperty(prop)) {
@@ -537,9 +550,12 @@ class ExactFuzzy extends UniqRule {
   }
 
   @skip(isUndefined)
-  static check(it:any, {shape, fuzzy}: ExactFuzzyParamsType): Issue[] {
+  static check(it:any, {shape, fuzzy}: ExactFuzzyParamsType, context: Context): Issue[] {
     const issues = Object.entries(shape)
-    .map(([key, type]) => this.checkProp(key, it[key], type).map((issue) => shiftPath(key, issue)))
+    .map(
+      ([key, type]) => this.checkProp(key, it[key], type, nestContext(context, key, it))
+      .map((issue) => shiftPath(key, issue))
+    )
     .reduce((result, item) => result.concat(item), [])
 
     Props: for (const prop of Object.getOwnPropertyNames(it)) {
@@ -549,7 +565,10 @@ class ExactFuzzy extends UniqRule {
 
       for (const [regexp, fuzzyType] of fuzzy) {
         if (regexp.test(prop)) {
-          issues.push(...this.checkProp(prop, it[prop], fuzzyType).map((issue) => shiftPath(prop, issue)))
+          issues.push(
+            ...this.checkProp(prop, it[prop], fuzzyType, nestContext(context, prop, it))
+            .map((issue) => shiftPath(prop, issue))
+          )
           continue Props
         }
       }
@@ -566,16 +585,23 @@ class ExactFuzzy extends UniqRule {
     return issues
   }
 
-  static checkProp(key: string|number, value: any, type: Checkable|ShapeParamType|Ref|Function) {
+  static checkProp(
+    key: string|number,
+    value: any,
+    type: Checkable|ShapeParamType|Ref|Function,
+    context: Context,
+  ) {
     if (typeof type === 'function') {
       type = (<unknown>type as Function)()
     }
 
     if (isObject(type) && isPlainObject(type)) {
-      return this.check(value, {shape: <unknown>type as ShapeParamType, fuzzy:[]})
+      return this.check(
+        value, {shape: <unknown>type as ShapeParamType, fuzzy:[]}, context
+      )
     }
     else {
-      return check(value, unref(type))
+      return check(value, unref(type), context)
     }
   }
 }
@@ -613,14 +639,14 @@ class Select extends UniqRule {
   }
 
   @skip(isUndefined)
-  static check(it:any, {select}:SelectParamsType): Issue[] {
+  static check(it:any, {select}:SelectParamsType, context: Context): Issue[] {
     for (let i = 0; i < select.length; i++) {
       const item = select[i]
       if (Array.isArray(item)) {
         const [match, type] = item
 
         if (match(it) === true) {
-          return check(it, unref(type))
+          return check(it, unref(type), context)
         }
       }
     }
@@ -644,7 +670,7 @@ class Custom extends UniqRule {
     return {check, args}
   }
 
-  static check(it: any, {check, args}): Issue[] {
+  static check(it: any, {check, args}, _context:Context): Issue[] {
     if (check(it, ...args) === true) {
       return []
     }

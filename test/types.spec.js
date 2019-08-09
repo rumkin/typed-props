@@ -1319,4 +1319,36 @@ describe('TypedProps', function() {
       should(check(Infinity, type)).has.lengthOf(1)
     })
   })
+
+  describe('Contexts', function() {
+    it('Should provide information about parents to child checks', function() {
+      class GreaterThenRule extends SimpleRule {
+        static get ruleName() {
+          return 'GreaterThenOther'
+        }
+
+        static config(targetProp) {
+          return {expect: true, targetProp}
+        }
+
+        static checkIt(it, {targetProp}, context) {
+          const parent = context.parents.slice().pop()
+
+          return it > parent[targetProp]
+        }
+      }
+
+      const type = Type.shape({
+        x: new Type(GreaterThenRule.create([], GreaterThenRule.config('y'))),
+      })
+
+      const issues = check({x: 0, y: 1}, type)
+
+      should(issues).has.lengthOf(1)
+      should(issues[0].path).be.deepEqual(['x'])
+      should(issues[0].rule).be.equal('GreaterThenOther')
+
+      should(check({x: 1, y: 0}, type)).has.lengthOf(0)
+    })
+  })
 })

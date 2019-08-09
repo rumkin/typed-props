@@ -10,7 +10,9 @@
 ### v1.4
 
  - [ ] Select should accept plain object as shapes.
- - [ ] Add context to prevent circular structures failures.
+ - [ ] Contexts:
+  - [x] Add contexts.
+  - [ ] Add circular structures check.
  - [ ] Inspect details.reason wider implementation:
     - reason is a rule branches.
     - reason is a code, not a message.

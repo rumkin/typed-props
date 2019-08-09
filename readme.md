@@ -197,17 +197,12 @@ const store = new TypeStore()
 const userType = Type.shape({
   id: Type.number.isRequired,
   name: Type.string.isRequired,
-  posts: Type.arrayOf(store.ref('Post')),
-})
-
-const postType = Type.shape({
-  id: Type.number.isRequired,
-  title: Type.string.isRequired,
-  authors: Type.arrayOf(store.ref('User')),
+  friends: Type.arrayOf(
+    store.ref('User')
+  ),
 })
 
 store.add('User', userType)
-store.add('Post', postType)
 ```
 
 ## Non-standard checks

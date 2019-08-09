@@ -4,7 +4,7 @@ export const CHECK = Symbol('check')
 export type Check = {
   rule: string
   params: Object
-  check: (value:any, params: Object) => Issue[]
+  check: (value:any, params: Object, context: Context) => Issue[]
 }
 
 export type Issue = {
@@ -16,11 +16,17 @@ export type Issue = {
   }
 }
 
+export type Context = {
+  path: Array<String|Number>,
+  parents: Array<Object|Array<any>>,
+  checks?: Check[],
+}
+
 export type IRule = {
   ruleName: string
   create: (checks: Check[], params: Object) => Check[]
   config: (...args: any[]) => Object
-  check: (value: any, params: Object) => Issue[]
+  check: (value: any, params: Object, context: Context) => Issue[]
 }
 
 export type ICheckable = {
@@ -47,7 +53,7 @@ export class Rule {
   }
 
   /* istanbul ignore next */
-  static check(_value: any, _params: object): Issue[] {
+  static check(_value: any, _params: object, _context: Context): Issue[] {
     return []
   }
 }
@@ -61,8 +67,12 @@ export class CheckError extends TypeError {
   }
 }
 
-export function check(it:any, checker:Checkable): Issue[] {
-  return checker[CHECK](it)
+export function check(it:any, checker:Checkable, context?:Context): Issue[] {
+  if (! context) {
+    context = {path: [], parents: []}
+  }
+
+  return checker[CHECK](it, context)
 }
 
 export class Checkable {
@@ -72,11 +82,11 @@ export class Checkable {
     this[CHECKS] = checks
   }
 
-  [CHECK](it: any): Issue[] {
+  [CHECK](it: any, context: Context): Issue[] {
     const checks = this[CHECKS]
 
     for (const {params, check} of checks) {
-      const result = check(it, params)
+      const result = check(it, params, context)
       if (result.length) {
         return result
       }
@@ -87,6 +97,14 @@ export class Checkable {
 
   getChecks(): Check[] {
     return [...this[CHECKS]]
+  }
+}
+
+export function nestContext(source:Context, key:String|Number, value:Object|Array<any>) {
+  return {
+    ...source,
+    path: [...source.path, key],
+    parents: [...source.parents, value]
   }
 }
 
@@ -121,7 +139,10 @@ export function result(type: Checkable) {
     descriptor.value = function(...args) {
       const result = origin.call(this, ...args)
 
-      const report = type[CHECK](result)
+      const report = type[CHECK](result, {
+        path: [],
+        parents: [],
+      })
       if (report.length) {
         throw new CheckError('Bad result type', report)
       }
