@@ -677,7 +677,7 @@ describe('TypedProps', function() {
 
         const type = Type.shape({
           user: {
-            name: Type.string.isRequired
+            name: Type.string.isRequired,
           },
         })
 
